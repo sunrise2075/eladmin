@@ -210,6 +210,15 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.16</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <!-- 打包时跳过测试 -->
             <plugin>
@@ -232,6 +241,7 @@
             </releases>
         </repository>
     </repositories>
+
 
     <pluginRepositories>
         <pluginRepository>
