@@ -15,3 +15,13 @@
             </plugins>
         </pluginManagement>
     </build>
+
+# 创建本地数据库
+
+    CREATE DATABASE `vote_db` CHARACTER SET utf8 COLLATE utf8_general_ci;
+    
+    CREATE USER 'voteAdmin'@'localhost' IDENTIFIED BY 'va123456';
+    
+    GRANT ALL ON vote_db.* TO 'voteAdmin'@'localhost';
+    
+    FLUSH PRIVILEGES;
