@@ -59,3 +59,7 @@ Uninstall Redis and its files.
 
     brew uninstall redis
     rm ~/Library/LaunchAgents/homebrew.mxcl.redis.plist
+
+# 处理数据库机密
+
+# 定义后台接口范围和数量
