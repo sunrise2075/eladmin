@@ -62,4 +62,14 @@ Uninstall Redis and its files.
 
 # 处理数据库机密
 
+# `Swagger`文档
+
+## `JSON`结果
+
+[JSON结果集](http://localhost:8000/v2/api-docs)
+
+## `HTML`文档
+
+[文档界面](http://localhost:8000/swagger-ui.html)
+
 # 定义后台接口范围和数量

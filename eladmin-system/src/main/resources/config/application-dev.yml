@@ -97,6 +97,8 @@ generator:
 #是否开启 swagger-ui
 swagger:
   enabled: true
+  host:
+    url:http://localhost:8000/api/index
 
 # IP 本地解析
 ip:
