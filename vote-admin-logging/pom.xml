@@ -4,18 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>eladmin</artifactId>
-        <groupId>me.zhengjie</groupId>
+        <groupId>me.tiger</groupId>
         <version>2.6</version>
+        <relativePath />
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>eladmin-logging</artifactId>
+    <artifactId>vote-admin-logging</artifactId>
     <name>日志模块</name>
 
     <dependencies>
         <dependency>
-            <groupId>me.zhengjie</groupId>
-            <artifactId>eladmin-common</artifactId>
+            <groupId>me.tiger</groupId>
+            <artifactId>vote-admin-common</artifactId>
             <version>2.6</version>
         </dependency>
     </dependencies>

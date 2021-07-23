@@ -72,4 +72,8 @@ Uninstall Redis and its files.
 
 [文档界面](http://localhost:8000/swagger-ui.html)
 
+# 安装本地自定义父pom
+
+    mvn install -Pprepare
+
 # 定义后台接口范围和数量
