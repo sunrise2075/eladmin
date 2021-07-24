@@ -76,4 +76,8 @@ Uninstall Redis and its files.
 
     mvn install -Pprepare
 
+# 建表
+
+
+
 # 定义后台接口范围和数量

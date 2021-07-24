@@ -12,6 +12,10 @@ spring:
     redis:
       repositories:
         enabled: false
+  http:
+    multipart:
+      max-file-size:10MB
+      max-request-size:10MB
 
   #配置 Jpa
   jpa:
