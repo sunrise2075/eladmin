@@ -15,6 +15,7 @@
  */
 package me.tiger.modules.works.rest;
 
+import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author tiger
@@ -87,20 +90,37 @@ public class WorksInfoController {
     @Log("为作品上传视频")
     @ApiOperation("为作品上传视频")
     @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<String> addVideo(@RequestParam("video") MultipartFile file) {
+    public ResponseEntity<JSONObject> addVideo(@RequestParam("video") MultipartFile file) {
 
         if (file.isEmpty()) {
-            return new ResponseEntity<>("文件为空,请选择你的文件上传", HttpStatus.NO_CONTENT);
+            JSONObject jsonObject = buildResult(0, "文件为空,请选择你的文件上传", null);
+            return new ResponseEntity<>(jsonObject, HttpStatus.NO_CONTENT);
         }
 
         String relativeFilePath = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         Path path = FILE_ROOT.resolve(relativeFilePath);
         try {
             file.transferTo(path);
-            return new ResponseEntity<>(relativeFilePath, HttpStatus.CREATED);
+
+            JSONObject data = new JSONObject();
+            data.put("file", relativeFilePath);
+            JSONObject jsonObject = buildResult(1, "文件上传成功", data);
+
+            return new ResponseEntity<>(jsonObject, HttpStatus.CREATED);
         } catch (IOException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+
+            JSONObject jsonObject = buildResult(1, e.getMessage(), null);
+
+            return new ResponseEntity<>(jsonObject, HttpStatus.UNPROCESSABLE_ENTITY);
         }
+    }
+
+    private JSONObject buildResult(int code, String message, Object data) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("code", code);
+        jsonObject.put("msg", message);
+        jsonObject.put("data", data);
+        return jsonObject;
     }
 
     @PutMapping
