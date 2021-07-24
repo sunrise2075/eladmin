@@ -33,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * @author tiger
@@ -44,6 +46,8 @@ import java.io.IOException;
 @Api(tags = "作品信息管理")
 @RequestMapping("/api/worksInfo")
 public class WorksInfoController {
+
+    private static Path FILE_ROOT = Paths.get("uploads");
 
     private final WorksInfoService worksInfoService;
 
@@ -84,7 +88,19 @@ public class WorksInfoController {
     @ApiOperation("为作品上传视频")
     @PreAuthorize("@el.check('worksInfo:add')")
     public ResponseEntity<String> addVideo(@RequestParam("video") MultipartFile file) {
-        return new ResponseEntity<>(HttpStatus.CREATED);
+
+        if (file.isEmpty()) {
+            return new ResponseEntity<>("文件为空,请选择你的文件上传", HttpStatus.NO_CONTENT);
+        }
+
+        String relativeFilePath = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        Path path = FILE_ROOT.resolve(relativeFilePath);
+        try {
+            file.transferTo(path);
+            return new ResponseEntity<>(relativeFilePath, HttpStatus.CREATED);
+        } catch (IOException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
+        }
     }
 
     @PutMapping
