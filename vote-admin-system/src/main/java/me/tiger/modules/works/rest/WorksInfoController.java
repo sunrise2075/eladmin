@@ -27,8 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,7 +44,7 @@ import java.util.stream.Collectors;
  * @website https://el-admin.vip
  * @date 2021-07-24
  **/
-@Controller
+@RestController
 @RequiredArgsConstructor
 @Api(tags = "作品信息管理")
 @RequestMapping("/api/worksInfo")
