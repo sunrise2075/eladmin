@@ -25,9 +25,10 @@ import me.tiger.modules.works.service.WorksInfoService;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,19 +39,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author tiger
  * @website https://el-admin.vip
  * @date 2021-07-24
  **/
-@RestController
+@Controller
 @RequiredArgsConstructor
 @Api(tags = "作品信息管理")
 @RequestMapping("/api/worksInfo")
 public class WorksInfoController {
 
-    private static Path FILE_ROOT = Paths.get("uploads");
+    private static final Path FILE_ROOT = Paths.get("uploads");
 
     private final WorksInfoService worksInfoService;
 
@@ -78,30 +80,54 @@ public class WorksInfoController {
         return new ResponseEntity<>(worksInfoService.create(resources), HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/images", headers = "content-type=multipart/form-data", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Log("为作品上传图片")
-    @ApiOperation("为作品上传图片")
+    @Log("创建图片类参赛作品")
+    @ApiOperation("创建图片类参赛作品")
     @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<String> addImages(@RequestParam("images") MultipartFile[] file) {
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    @PostMapping("/images")
+    public ResponseEntity<JSONObject> createImagesWork(@RequestParam("username") String userName,
+                                                       @RequestParam("phone") String phone,
+                                                       @RequestParam("description") String description,
+                                                       @RequestParam("images") MultipartFile[] images) {
+
+        if (images.length == 0) {
+            return new ResponseEntity<>(buildResult(0, "图片列表不能为空，请上传作品有关图片", null), HttpStatus.CREATED);
+        }
+
+        List<Object> imagesProcessResult = Arrays.asList(images).stream().map(multipartFile -> {
+
+            JSONObject jsonObject = new JSONObject();
+            try {
+                String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), multipartFile.getOriginalFilename());
+                Path path = FILE_ROOT.resolve(relativeFilePath);
+                multipartFile.transferTo(path);
+                jsonObject.put("Saved Successfully", multipartFile.getOriginalFilename());
+            } catch (IOException e) {
+                jsonObject.put(String.format("Unable to save:%s", e.getMessage()), multipartFile.getOriginalFilename());
+            }
+            return jsonObject;
+        }).collect(Collectors.toList());
+
+        return new ResponseEntity<>(buildResult(1, "保存成功", imagesProcessResult), HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/video", headers = "content-type=multipart/form-data", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Log("为作品上传视频")
+    @PostMapping(value = "/video", headers = "content-type=multipart/form-data")
+    @Log("创建视频类参赛作品")
     @ApiOperation("为作品上传视频")
     @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<JSONObject> addVideo(@RequestParam("video") MultipartFile file) {
+    public ResponseEntity<JSONObject> createVideoWorks(@RequestParam("username") String userName,
+                                                       @RequestParam("phone") String phone,
+                                                       @RequestParam("description") String description,
+                                                       @RequestParam("video") MultipartFile video) {
 
-        if (file.isEmpty()) {
+        if (video.isEmpty()) {
             JSONObject jsonObject = buildResult(0, "文件为空,请选择你的文件上传", null);
             return new ResponseEntity<>(jsonObject, HttpStatus.NO_CONTENT);
         }
 
-        String relativeFilePath = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), video.getOriginalFilename());
         Path path = FILE_ROOT.resolve(relativeFilePath);
         try {
-            file.transferTo(path);
-
+            video.transferTo(path);
             JSONObject data = new JSONObject();
             data.put("file", relativeFilePath);
             JSONObject jsonObject = buildResult(1, "文件上传成功", data);
