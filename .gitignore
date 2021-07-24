@@ -1,6 +1,7 @@
 ### IDEA ###
-.idea/*
+.idea/vcs.xml
 *.iml
 */target/*
 */*.iml
 /.gradle/
+/logs/*.log
