@@ -65,7 +65,7 @@ public class WorksInfo implements Serializable {
     private Integer type;
 
     @Column(name = "life_status")
-    @ApiModelProperty(value = "作品状态：1. 提交  2. 审核中  3. 审核通过  4. 审核拒绝 5. 获奖")
+    @ApiModelProperty(value = "1")
     private Integer lifeStatus;
 
     @Column(name = "created_date")

@@ -15,7 +15,12 @@
 */
 package me.tiger.modules.works.service.impl;
 
+import me.tiger.modules.works.constant.Type;
+import me.tiger.modules.works.domain.WorksArticle;
+import me.tiger.modules.works.domain.WorksFiles;
 import me.tiger.modules.works.domain.WorksInfo;
+import me.tiger.modules.works.repository.WorksArticleRepository;
+import me.tiger.modules.works.repository.WorksFilesRepository;
 import me.tiger.utils.ValidationUtil;
 import me.tiger.utils.FileUtil;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +41,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 /**
 * @website https://el-admin.vip
@@ -49,6 +55,8 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
     private final WorksInfoRepository worksInfoRepository;
     private final WorksInfoMapper worksInfoMapper;
+    private final WorksArticleRepository worksArticleRepository;
+    private final WorksFilesRepository worksFilesRepository;
 
     @Override
     public Map<String,Object> queryAll(WorksInfoQueryCriteria criteria, Pageable pageable){
@@ -113,10 +121,26 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     @Override
     public void saveArticle(WorksInfo worksInfo, String article) {
         //1。 保存文字类作品
+        WorksInfo savedWorks = worksInfoRepository.save(worksInfo);
+
+        if (Type.ARTICLE.getCode().equals(savedWorks.getType())) {
+            WorksArticle worksArticle = WorksArticle.builder().worksId(savedWorks.getId()).articleContent(article).build();
+            worksArticleRepository.save(worksArticle);
+        }
     }
 
     @Override
     public void saveWorksInfoWithFiles(WorksInfo worksInfo, List<String> pathList) {
         //2. 保存图片类作品
+        WorksInfo savedWorks = worksInfoRepository.save(worksInfo);
+
+        if (Type.IMAGES.getCode().equals(savedWorks.getType())|| Type.VIDEO.getCode().equals(savedWorks.getType())) {
+
+            List<WorksFiles> worksFilesList = pathList.stream().map(s -> {
+                return WorksFiles.builder().worksId(savedWorks.getId()).relativeFilePath(s).build();
+            }).collect(Collectors.toList());
+
+            worksFilesRepository.saveAll(worksFilesList);
+        }
     }
 }
