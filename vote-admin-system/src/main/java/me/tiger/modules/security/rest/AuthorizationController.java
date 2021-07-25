@@ -16,6 +16,8 @@
 package me.tiger.modules.security.rest;
 
 import cn.hutool.core.util.IdUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.wf.captcha.base.Captcha;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,18 +27,21 @@ import me.tiger.annotation.rest.AnonymousDeleteMapping;
 import me.tiger.annotation.rest.AnonymousGetMapping;
 import me.tiger.annotation.rest.AnonymousPostMapping;
 import me.tiger.config.RsaProperties;
+import me.tiger.config.WXConfig;
 import me.tiger.exception.BadRequestException;
 import me.tiger.modules.security.config.bean.LoginCodeEnum;
 import me.tiger.modules.security.config.bean.LoginProperties;
 import me.tiger.modules.security.config.bean.SecurityProperties;
 import me.tiger.modules.security.security.TokenProvider;
+import me.tiger.modules.security.service.OnlineUserService;
 import me.tiger.modules.security.service.dto.AuthUserDto;
 import me.tiger.modules.security.service.dto.JwtUserDto;
-import me.tiger.modules.security.service.OnlineUserService;
-import me.tiger.utils.RsaUtils;
+import me.tiger.util.HttpClientUtil;
 import me.tiger.utils.RedisUtils;
+import me.tiger.utils.RsaUtils;
 import me.tiger.utils.SecurityUtils;
 import me.tiger.utils.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,9 +49,16 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -62,13 +74,53 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Api(tags = "系统：系统授权接口")
 public class AuthorizationController {
+
     private final SecurityProperties properties;
     private final RedisUtils redisUtils;
     private final OnlineUserService onlineUserService;
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final WXConfig wxConfig;
+
+    @Value("${server.domain:5847f71879aa.ngrok.io}")
+    private String serverDomain;
+
     @Resource
     private LoginProperties loginProperties;
+
+    @RequestMapping("/wxLogin")
+    public void wxLogin(HttpServletResponse response) throws IOException, IOException {
+
+        //请求获取code的回调地址
+        String callBack = String.format("http://%s/%s", serverDomain, "auth/wxCallBack");
+        //请求地址
+        String url = String.format(WXConfig.WX_OATH_LOGIN_URL, wxConfig.getAppID(), URLEncoder.encode(callBack));
+        //重定向
+        response.sendRedirect(url);
+    }
+
+    //	回调方法
+    @RequestMapping("/wxCallBack")
+    public void wxCallBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        String code = request.getParameter("code");
+
+        //获取access_token
+        String url = String.format(WXConfig.WX_ACCESS_TOKEN_URL, wxConfig.getAppID(), wxConfig.getAppsecret(), code);
+        String result = HttpClientUtil.doGet(url);
+
+        System.out.println("请求获取access_token:" + result);
+        //返回结果的json对象
+        JSONObject resultObject = JSON.parseObject(result);
+
+        //请求获取userInfo
+        String infoUrl = String.format(WXConfig.WX_USER_INFO_URL, resultObject.getString("access_token"), resultObject.getString("openid"));
+
+        String resultInfo = HttpClientUtil.doGet(infoUrl);
+        //此时已获取到userInfo，再根据业务进行处理
+        System.out.println("请求获取userInfo:" + resultInfo);
+
+    }
 
     @ApiOperation("登录授权")
     @AnonymousPostMapping(value = "/login")

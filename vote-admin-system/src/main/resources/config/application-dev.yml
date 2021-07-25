@@ -116,3 +116,6 @@ file:
   # 文件大小 /M
   maxSize: 100
   avatarMaxSize: 5
+
+server:
+  domain: 5847f71879aa.ngrok.io

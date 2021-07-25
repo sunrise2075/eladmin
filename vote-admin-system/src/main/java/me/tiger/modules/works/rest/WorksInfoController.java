@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -128,7 +129,7 @@ public class WorksInfoController {
                     String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), imageFile.getOriginalFilename());
                     Path path = FILE_ROOT.resolve(relativeFilePath);
                     imageFile.transferTo(path);
-                    pathList.add(relativeFilePath);
+                    pathList.add(String.format("uploads%s%s", File.separator, relativeFilePath));
                 } catch (IOException e) {
                     return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
                 }
@@ -164,9 +165,8 @@ public class WorksInfoController {
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
             Path path = FILE_ROOT.resolve(relativeFilePath);
             video.transferTo(path);
-            JSONObject data = new JSONObject();
-            data.put("file", relativeFilePath);
-            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(relativeFilePath));
+
+            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(String.format("uploads%s%s", File.separator, relativeFilePath)));
             return new ResponseEntity<>(buildResult(0, "保存成功", null), HttpStatus.UNPROCESSABLE_ENTITY);
         } catch (IOException e) {
 
