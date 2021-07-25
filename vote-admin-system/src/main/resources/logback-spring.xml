@@ -37,6 +37,7 @@
     <!--普通日志输出到控制台-->
     <root level="info">
         <appender-ref ref="console"/>
+        <appender-ref ref="appLog" />
     </root>
 
     <!--监控sql日志输出 -->
@@ -65,7 +66,7 @@
         <appender-ref ref="console"/>
     </logger>
 
-    <logger name="app.log" level="INFO" additivity="false">
-        <appender-ref ref="appLog" />
-    </logger>
+<!--    <logger name="app.log" level="INFO" additivity="false">-->
+<!--        <appender-ref ref="appLog" />-->
+<!--    </logger>-->
 </configuration>
