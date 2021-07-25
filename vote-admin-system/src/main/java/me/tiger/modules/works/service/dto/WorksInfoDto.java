@@ -18,6 +18,7 @@ package me.tiger.modules.works.service.dto;
 import lombok.Data;
 import java.sql.Timestamp;
 import java.io.Serializable;
+import java.util.List;
 
 /**
 * @website https://el-admin.vip
@@ -46,6 +47,10 @@ public class WorksInfoDto implements Serializable {
     /** 作品状态：1. 提交  2. 审核中  3. 审核通过  4. 审核拒绝
 5. 获奖 */
     private Integer lifeStatus;
+
+    private String articleContent;
+
+    private List<String> files;
 
     /** 创建日期 */
     private Timestamp createdDate;

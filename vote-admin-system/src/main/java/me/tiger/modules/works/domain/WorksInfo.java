@@ -27,6 +27,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.sql.Timestamp;
 import java.io.Serializable;
+import java.util.List;
 
 /**
 * @website https://el-admin.vip
@@ -83,6 +84,8 @@ public class WorksInfo implements Serializable {
     @Column(name = "updated_date")
     @ApiModelProperty(value = "更新日期")
     private Timestamp updatedDate;
+
+
 
     public void copy(WorksInfo source){
         BeanUtil.copyProperties(source,this, CopyOptions.create().setIgnoreNullValue(true));
