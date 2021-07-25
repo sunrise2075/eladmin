@@ -109,4 +109,14 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         }
         FileUtil.downloadExcel(list, response);
     }
+
+    @Override
+    public void saveArticle(WorksInfo worksInfo, String article) {
+        //1。 保存文字类作品
+    }
+
+    @Override
+    public void saveWorksInfoWithFiles(WorksInfo worksInfo, List<String> pathList) {
+        //2. 保存图片类作品
+    }
 }

@@ -20,6 +20,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import me.tiger.annotation.Log;
+import me.tiger.modules.works.constant.LifeStatus;
+import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksInfo;
 import me.tiger.modules.works.service.WorksInfoService;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
@@ -35,9 +37,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author tiger
@@ -78,6 +80,27 @@ public class WorksInfoController {
         return new ResponseEntity<>(worksInfoService.create(resources), HttpStatus.CREATED);
     }
 
+    @Log("创建文章类参赛作品")
+    @ApiOperation("创建文章类参赛作品")
+    @PreAuthorize("@el.check('worksInfo:add')")
+    @PostMapping("/article")
+    public ResponseEntity<JSONObject> createParagraph(@RequestParam("username") String userName,
+                                                      @RequestParam("phone") String phone,
+                                                      @RequestParam("description") String description,
+                                                      @RequestParam("article") String article) {
+
+        try {
+            WorksInfo worksInfo = WorksInfo.builder()
+                    .type(Type.ARTICLE.getCode())
+                    .authorName(userName).authorMobile(phone)
+                    .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
+            worksInfoService.saveArticle(worksInfo, article);
+            return new ResponseEntity<>(buildResult(1, "保存成功", null), HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
+        }
+    }
+
     @Log("创建图片类参赛作品")
     @ApiOperation("创建图片类参赛作品")
     @PreAuthorize("@el.check('worksInfo:add')")
@@ -91,21 +114,32 @@ public class WorksInfoController {
             return new ResponseEntity<>(buildResult(0, "图片列表不能为空，请上传作品有关图片", null), HttpStatus.CREATED);
         }
 
-        List<Object> imagesProcessResult = Arrays.asList(images).stream().map(multipartFile -> {
+        try {
+            WorksInfo worksInfo = WorksInfo.builder()
+                    .type(Type.IMAGES.getCode())
+                    .authorName(userName).authorMobile(phone)
+                    .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
 
-            JSONObject jsonObject = new JSONObject();
-            try {
-                String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), multipartFile.getOriginalFilename());
-                Path path = FILE_ROOT.resolve(relativeFilePath);
-                multipartFile.transferTo(path);
-                jsonObject.put("Saved Successfully", multipartFile.getOriginalFilename());
-            } catch (IOException e) {
-                jsonObject.put(String.format("Unable to save:%s", e.getMessage()), multipartFile.getOriginalFilename());
+            //如果图片上传发生异常，直接返回报错,用户可以重试上传
+            // 如果一直失败就需要系统管理员介入
+            List<String> pathList = new ArrayList<>(images.length);
+            for (MultipartFile imageFile : images) {
+                try {
+                    String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), imageFile.getOriginalFilename());
+                    Path path = FILE_ROOT.resolve(relativeFilePath);
+                    imageFile.transferTo(path);
+                    pathList.add(relativeFilePath);
+                } catch (IOException e) {
+                    return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
+                }
             }
-            return jsonObject;
-        }).collect(Collectors.toList());
 
-        return new ResponseEntity<>(buildResult(1, "保存成功", imagesProcessResult), HttpStatus.CREATED);
+            worksInfoService.saveWorksInfoWithFiles(worksInfo, pathList);
+        } catch (Exception e) {
+            return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
+        }
+
+        return new ResponseEntity<>(buildResult(1, "保存成功", null), HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/video", headers = "content-type=multipart/form-data")
@@ -123,19 +157,20 @@ public class WorksInfoController {
         }
 
         String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), video.getOriginalFilename());
-        Path path = FILE_ROOT.resolve(relativeFilePath);
         try {
+            WorksInfo worksInfo = WorksInfo.builder()
+                    .type(Type.IMAGES.getCode())
+                    .authorName(userName).authorMobile(phone)
+                    .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
+            Path path = FILE_ROOT.resolve(relativeFilePath);
             video.transferTo(path);
             JSONObject data = new JSONObject();
             data.put("file", relativeFilePath);
-            JSONObject jsonObject = buildResult(1, "文件上传成功", data);
-
-            return new ResponseEntity<>(jsonObject, HttpStatus.CREATED);
+            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(relativeFilePath));
+            return new ResponseEntity<>(buildResult(0, "保存成功", null), HttpStatus.UNPROCESSABLE_ENTITY);
         } catch (IOException e) {
 
-            JSONObject jsonObject = buildResult(1, e.getMessage(), null);
-
-            return new ResponseEntity<>(jsonObject, HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 

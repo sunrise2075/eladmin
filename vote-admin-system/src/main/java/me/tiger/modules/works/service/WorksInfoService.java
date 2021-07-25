@@ -80,4 +80,20 @@ public interface WorksInfoService {
     * @throws IOException /
     */
     void download(List<WorksInfoDto> all, HttpServletResponse response) throws IOException;
+
+    /**
+     * 保存文字类作品
+     * @param worksInfo
+     * @param article
+     *
+     * */
+    void saveArticle(WorksInfo worksInfo, String article);
+
+    /**
+     * 保存包含有图片或者视频的作品
+     * @param worksInfo
+     * @param pathList
+     *
+     * */
+    void saveWorksInfoWithFiles(WorksInfo worksInfo, List<String> pathList);
 }
