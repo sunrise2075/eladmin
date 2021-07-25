@@ -23,7 +23,7 @@
         <!-- 测试部署时使用如下配置 -->
         <!-- 可让每天产生一个日志文件，最多 30 个，更早的删除 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>./logs/log-%d{yyyy-MM-dd}.log
+            <fileNamePattern>../logs/log-%d{yyyy-MM-dd}.log
             </fileNamePattern>
             <maxHistory>10</maxHistory>
         </rollingPolicy>
