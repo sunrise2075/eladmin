@@ -37,10 +37,14 @@ import me.tiger.modules.security.service.OnlineUserService;
 import me.tiger.modules.security.service.dto.AuthUserDto;
 import me.tiger.modules.security.service.dto.JwtUserDto;
 import me.tiger.util.HttpClientUtil;
+import me.tiger.util.HttpUtil;
+import me.tiger.util.JSONUtil;
+import me.tiger.util.UUIDUtil;
 import me.tiger.utils.RedisUtils;
 import me.tiger.utils.RsaUtils;
 import me.tiger.utils.SecurityUtils;
 import me.tiger.utils.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +63,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -88,6 +93,25 @@ public class AuthorizationController {
     @Resource
     private LoginProperties loginProperties;
 
+    // 获取微信JS-SDK签名
+    @GetMapping("/getWXJSSDKSignature")
+    public ResponseEntity<JSONObject> getJSSDKSignature(String url) {
+        String tokenJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + wxConfig.getAppID() + "&secret=" + wxConfig.getAppsecret(), null);
+        String access_token = JSONUtil.getString(tokenJson, "access_token");  // access_token
+        String ticketJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + access_token + "&type=jsapi", null);
+        String ticket = JSONUtil.getString(ticketJson, "ticket");  // ticket
+        String noncestr = UUIDUtil.randomUUID8();  // 随机字符串
+        long timestamp = new Date().getTime();  // 时间戳
+        String str = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("timestamp", timestamp);
+        jsonObject.put("nonceStr", noncestr);
+        jsonObject.put("signature", DigestUtils.sha1Hex(str));
+
+        return new ResponseEntity<>(jsonObject, HttpStatus.OK);
+    }
+
     @RequestMapping("/wxLogin")
     public void wxLogin(HttpServletResponse response) throws IOException, IOException {
 
@@ -100,7 +124,7 @@ public class AuthorizationController {
     }
 
     //	回调方法
-    @RequestMapping("/wxCallBack")
+    @RequestMapping("/wxCallback")
     public void wxCallBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String code = request.getParameter("code");
