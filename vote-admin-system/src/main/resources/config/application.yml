@@ -17,7 +17,6 @@ spring:
     multipart:
       max-file-size:10MB
       max-request-size:10MB
-
   #配置 Jpa
   jpa:
     properties:
@@ -25,6 +24,10 @@ spring:
         ddl-auto: none
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect
     open-in-view: true
+  mvc:
+    static-path-pattern: /view/**
+  resources:
+    static-locations: file:uploads
 
   redis:
     #数据库索引
@@ -45,6 +48,12 @@ task:
     keep-alive-seconds: 60
     # 队列容量
     queue-capacity: 50
+
+wx:
+  appID: wxaf36c67f6b3ece3d
+  appsecret: 26fdd3258c1067005c172cab698ec3fe
+
+
 
 #七牛云
 qiniu:

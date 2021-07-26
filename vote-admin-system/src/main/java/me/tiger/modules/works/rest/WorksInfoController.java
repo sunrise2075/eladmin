@@ -129,7 +129,7 @@ public class WorksInfoController {
                     String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), imageFile.getOriginalFilename());
                     Path path = FILE_ROOT.resolve(relativeFilePath);
                     imageFile.transferTo(path);
-                    pathList.add(String.format("uploads%s%s", File.separator, relativeFilePath));
+                    pathList.add(getFileRelativeUrl(relativeFilePath));
                 } catch (IOException e) {
                     return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
                 }
@@ -166,12 +166,20 @@ public class WorksInfoController {
             Path path = FILE_ROOT.resolve(relativeFilePath);
             video.transferTo(path);
 
-            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(String.format("uploads%s%s", File.separator, relativeFilePath)));
+            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(getFileRelativeUrl(relativeFilePath)));
             return new ResponseEntity<>(buildResult(0, "保存成功", null), HttpStatus.UNPROCESSABLE_ENTITY);
         } catch (IOException e) {
 
             return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.UNPROCESSABLE_ENTITY);
         }
+    }
+
+    /**
+     * 组成用于在网页上显示图片或者加载视频的URL相对路径
+     *
+     * */
+    private String getFileRelativeUrl(String relativeFilePath) {
+        return String.format("view%s%s", File.separator, relativeFilePath);
     }
 
     private JSONObject buildResult(int code, String message, Object data) {
