@@ -93,26 +93,8 @@ public class AuthorizationController {
     @Resource
     private LoginProperties loginProperties;
 
-    // 获取微信JS-SDK签名
-    @AnonymousGetMapping("/getWXJSSDKSignature")
-    public ResponseEntity<JSONObject> getJSSDKSignature(String url) {
-        String tokenJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + wxConfig.getAppID() + "&secret=" + wxConfig.getAppsecret(), null);
-        String access_token = JSONUtil.getString(tokenJson, "access_token");  // access_token
-        String ticketJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + access_token + "&type=jsapi", null);
-        String ticket = JSONUtil.getString(ticketJson, "ticket");  // ticket
-        String noncestr = UUIDUtil.randomUUID8();  // 随机字符串
-        long timestamp = new Date().getTime();  // 时间戳
-        String str = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
 
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("appId", wxConfig.getAppID());
-        jsonObject.put("timestamp", timestamp);
-        jsonObject.put("nonceStr", noncestr);
-        jsonObject.put("signature", DigestUtils.sha1Hex(str));
-
-        return new ResponseEntity<>(jsonObject, HttpStatus.OK);
-    }
-
+    @ApiOperation("微信登录接口")
     @RequestMapping("/wxLogin")
     public void wxLogin(HttpServletResponse response) throws IOException, IOException {
 
@@ -124,7 +106,7 @@ public class AuthorizationController {
         response.sendRedirect(url);
     }
 
-    //	回调方法
+    @ApiOperation("获取微信JS-SDK签名")
     @RequestMapping("/wxCallback")
     public void wxCallBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
@@ -145,6 +127,26 @@ public class AuthorizationController {
         //此时已获取到userInfo，再根据业务进行处理
         System.out.println("请求获取userInfo:" + resultInfo);
 
+    }
+
+    @ApiOperation("获取微信JS-SDK签名")
+    @AnonymousGetMapping(value = "/getWXJSSDKSignature")
+    public ResponseEntity<JSONObject> getJSSDKSignature(String url) {
+        String tokenJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + wxConfig.getAppID() + "&secret=" + wxConfig.getAppsecret(), null);
+        String access_token = JSONUtil.getString(tokenJson, "access_token");  // access_token
+        String ticketJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + access_token + "&type=jsapi", null);
+        String ticket = JSONUtil.getString(ticketJson, "ticket");  // ticket
+        String noncestr = UUIDUtil.randomUUID8();  // 随机字符串
+        long timestamp = new Date().getTime();  // 时间戳
+        String str = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("appId", wxConfig.getAppID());
+        jsonObject.put("timestamp", timestamp);
+        jsonObject.put("nonceStr", noncestr);
+        jsonObject.put("signature", DigestUtils.sha1Hex(str));
+
+        return new ResponseEntity<>(jsonObject, HttpStatus.OK);
     }
 
     @ApiOperation("登录授权")
