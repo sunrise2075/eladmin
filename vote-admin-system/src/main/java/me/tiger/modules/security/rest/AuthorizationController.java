@@ -94,7 +94,7 @@ public class AuthorizationController {
     private LoginProperties loginProperties;
 
     // 获取微信JS-SDK签名
-    @GetMapping("/getWXJSSDKSignature")
+    @AnonymousGetMapping("/getWXJSSDKSignature")
     public ResponseEntity<JSONObject> getJSSDKSignature(String url) {
         String tokenJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + wxConfig.getAppID() + "&secret=" + wxConfig.getAppsecret(), null);
         String access_token = JSONUtil.getString(tokenJson, "access_token");  // access_token
@@ -105,6 +105,7 @@ public class AuthorizationController {
         String str = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
 
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put("appId", wxConfig.getAppID());
         jsonObject.put("timestamp", timestamp);
         jsonObject.put("nonceStr", noncestr);
         jsonObject.put("signature", DigestUtils.sha1Hex(str));
