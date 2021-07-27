@@ -132,8 +132,15 @@ public class AuthorizationController {
     @ApiOperation("获取微信JS-SDK签名")
     @AnonymousGetMapping(value = "/getWXJSSDKSignature")
     public ResponseEntity<JSONObject> getJSSDKSignature(String url) {
-        String tokenJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" + wxConfig.getAppID() + "&secret=" + wxConfig.getAppsecret(), null);
+        log.info("getJSSDKSignature接口开始被调用，用户输入url:{}", url);
+
+        String tokenUrl = String.format("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", wxConfig.getAppID(), wxConfig.getAppsecret());
+        String tokenJson = HttpUtil.get(tokenUrl, null);
+        log.info("微信借口获取token，url:{}, json:{}", tokenUrl, tokenJson);
+
         String access_token = JSONUtil.getString(tokenJson, "access_token");  // access_token
+        log.info("access_token 获取完毕，结果:{}", access_token);
+
         String ticketJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + access_token + "&type=jsapi", null);
         String ticket = JSONUtil.getString(ticketJson, "ticket");  // ticket
         String noncestr = UUIDUtil.randomUUID8();  // 随机字符串
