@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.tiger.annotation.Log;
 import me.tiger.modules.works.constant.LifeStatus;
+import me.tiger.modules.works.constant.ResourceConstant;
 import me.tiger.modules.works.constant.ResponseConstant;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksInfo;
@@ -58,7 +59,7 @@ import java.util.Map;
 @RequestMapping("/api/worksInfo")
 public class WorksInfoController {
 
-    private static final Path FILE_ROOT = Paths.get("uploads");
+    private static final Path FILE_ROOT = Paths.get(ResourceConstant.UPLOAD_FOLDER_ROOT);
 
     private final WorksInfoService worksInfoService;
 

@@ -18,6 +18,7 @@ package me.tiger.config;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.support.config.FastJsonConfig;
 import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
+import me.tiger.modules.works.constant.ResourceConstant;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +44,9 @@ import java.util.List;
 @EnableWebMvc
 public class ConfigurerAdapter implements WebMvcConfigurer {
 
-    /** 文件配置 */
+    /**
+     * 文件配置
+     */
     private final FileProperties properties;
 
     public ConfigurerAdapter(FileProperties properties) {
@@ -64,10 +68,11 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         FileProperties.ElPath path = properties.getPath();
-        String avatarUtl = "file:" + path.getAvatar().replace("\\","/");
-        String pathUtl = "file:" + path.getPath().replace("\\","/");
+        String avatarUtl = "file:" + path.getAvatar().replace("\\", "/");
+        String pathUtl = "file:" + path.getPath().replace("\\", "/");
         registry.addResourceHandler("/avatar/**").addResourceLocations(avatarUtl).setCachePeriod(0);
         registry.addResourceHandler("/file/**").addResourceLocations(pathUtl).setCachePeriod(0);
+        registry.addResourceHandler("/view/**").addResourceLocations(String.format("file:%s%s", ResourceConstant.UPLOAD_FOLDER_ROOT, "/")).setCachePeriod(0);
         registry.addResourceHandler("/**").addResourceLocations("classpath:/META-INF/resources/").setCachePeriod(0);
     }
 
