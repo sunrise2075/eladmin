@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 @ConfigurationProperties(prefix = "wx")
-public class WXConfig {
+public class WXAccountConfig {
 
     private String appID;
     private String mchID;

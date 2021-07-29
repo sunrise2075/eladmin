@@ -23,11 +23,12 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.mp.api.WxMpService;
 import me.tiger.annotation.rest.AnonymousDeleteMapping;
 import me.tiger.annotation.rest.AnonymousGetMapping;
 import me.tiger.annotation.rest.AnonymousPostMapping;
 import me.tiger.config.RsaProperties;
-import me.tiger.config.WXConfig;
+import me.tiger.config.WXAccountConfig;
 import me.tiger.exception.BadRequestException;
 import me.tiger.modules.security.config.bean.LoginCodeEnum;
 import me.tiger.modules.security.config.bean.LoginProperties;
@@ -36,10 +37,7 @@ import me.tiger.modules.security.security.TokenProvider;
 import me.tiger.modules.security.service.OnlineUserService;
 import me.tiger.modules.security.service.dto.AuthUserDto;
 import me.tiger.modules.security.service.dto.JwtUserDto;
-import me.tiger.util.HttpClientUtil;
-import me.tiger.util.HttpUtil;
-import me.tiger.util.JSONUtil;
-import me.tiger.util.UUIDUtil;
+import me.tiger.util.*;
 import me.tiger.utils.RedisUtils;
 import me.tiger.utils.RsaUtils;
 import me.tiger.utils.SecurityUtils;
@@ -53,15 +51,13 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
@@ -80,12 +76,15 @@ import java.util.concurrent.TimeUnit;
 @Api(tags = "系统：系统授权接口")
 public class AuthorizationController {
 
+    public static final String ACCESS_TOKEN = "access_token";
+    public static final String TICKET = "ticket";
     private final SecurityProperties properties;
     private final RedisUtils redisUtils;
     private final OnlineUserService onlineUserService;
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-    private final WXConfig wxConfig;
+    private final WXAccountConfig wxConfig;
+    private final WxMpService wxMpService;
 
     @Value("${server.domain:5847f71879aa.ngrok.io}")
     private String serverDomain;
@@ -101,7 +100,7 @@ public class AuthorizationController {
         //请求获取code的回调地址
         String callBack = String.format("http://%s/%s", serverDomain, "auth/wxCallBack");
         //请求地址
-        String url = String.format(WXConfig.WX_OATH_LOGIN_URL, wxConfig.getAppID(), URLEncoder.encode(callBack));
+        String url = String.format(WXAccountConfig.WX_OATH_LOGIN_URL, wxConfig.getAppID(), URLEncoder.encode(callBack));
         //重定向
         response.sendRedirect(url);
     }
@@ -113,7 +112,7 @@ public class AuthorizationController {
         String code = request.getParameter("code");
 
         //获取access_token
-        String url = String.format(WXConfig.WX_ACCESS_TOKEN_URL, wxConfig.getAppID(), wxConfig.getAppsecret(), code);
+        String url = String.format(WXAccountConfig.WX_ACCESS_TOKEN_URL, wxConfig.getAppID(), wxConfig.getAppsecret(), code);
         String result = HttpClientUtil.doGet(url);
 
         System.out.println("请求获取access_token:" + result);
@@ -121,37 +120,73 @@ public class AuthorizationController {
         JSONObject resultObject = JSON.parseObject(result);
 
         //请求获取userInfo
-        String infoUrl = String.format(WXConfig.WX_USER_INFO_URL, resultObject.getString("access_token"), resultObject.getString("openid"));
+        String infoUrl = String.format(WXAccountConfig.WX_USER_INFO_URL, resultObject.getString("access_token"), resultObject.getString("openid"));
 
         String resultInfo = HttpClientUtil.doGet(infoUrl);
         //此时已获取到userInfo，再根据业务进行处理
         System.out.println("请求获取userInfo:" + resultInfo);
+    }
+
+    @ApiOperation("微信验证服务器所需接口")
+    @AnonymousGetMapping(value = "/wxCheckServer")
+    public void wxCallback2CheckServer(HttpServletRequest request, HttpServletResponse response,
+                                       @RequestParam(value = "signature", required = true) String signature,
+                                       @RequestParam(value = "timestamp", required = true) String timestamp,
+                                       @RequestParam(value = "nonce", required = true) String nonce,
+                                       @RequestParam(value = "echostr", required = true) String echostr) {
+
+        try {
+            if (SignUtil.checkSignature(signature, timestamp, nonce)) {
+                PrintWriter out = response.getWriter();
+                out.print(echostr);
+                out.close();
+            } else {
+                log.info("这里存在非法请求！");
+            }
+        } catch (Exception e) {
+            log.error("给微信回调的的接口发生错误", e);
+        }
 
     }
 
     @ApiOperation("获取微信JS-SDK签名")
-    @AnonymousGetMapping(value = "/getWXJSSDKSignature")
-    public ResponseEntity<JSONObject> getJSSDKSignature(String url) {
+    @AnonymousPostMapping(value = "/getWXJSSDKSignature")
+    public ResponseEntity<JSONObject> getJSSDKSignature(@RequestParam(value = "url", required = true) String url) {
         log.info("getJSSDKSignature接口开始被调用，用户输入url:{}", url);
 
-        String tokenUrl = String.format("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", wxConfig.getAppID(), wxConfig.getAppsecret());
-        String tokenJson = HttpUtil.get(tokenUrl, null);
-        log.info("微信借口获取token，url:{}, json:{}", tokenUrl, tokenJson);
+        String access_token;
+        if (redisUtils.hasKey(ACCESS_TOKEN)) {
+            access_token = (String) redisUtils.get(ACCESS_TOKEN);
+        }else {
+            String tokenUrl = String.format("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", wxConfig.getAppID(), wxConfig.getAppsecret());
+            String tokenJson = HttpUtil.get(tokenUrl, null);
+            log.info("微信接口获取ACCESS_TOKEN:   调用url   :{},    返回结果:   {}", tokenUrl, tokenJson);
+            access_token = JSONUtil.getString(tokenJson, ACCESS_TOKEN);
+            redisUtils.set(ACCESS_TOKEN, access_token, 7000L);
+        }
 
-        String access_token = JSONUtil.getString(tokenJson, "access_token");  // access_token
-        log.info("access_token 获取完毕，结果:{}", access_token);
+        String ticket;
+        if (redisUtils.hasKey(TICKET)) {
+            ticket = (String) redisUtils.get(TICKET);
+        }else {
+            String ticketJson = HttpUtil.get(String.format("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi", access_token), null);
+            ticket = JSONUtil.getString(ticketJson, TICKET);  // ticket
+            redisUtils.set(TICKET, ticket, 7000L);
+            log.info("从微信接口获取道德ticket结果是:   {}", ticket);
+        }
 
-        String ticketJson = HttpUtil.get("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + access_token + "&type=jsapi", null);
-        String ticket = JSONUtil.getString(ticketJson, "ticket");  // ticket
         String noncestr = UUIDUtil.randomUUID8();  // 随机字符串
-        long timestamp = new Date().getTime();  // 时间戳
-        String str = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
+        long timestamp = new Date().getTime() / 1000;  // 时间戳(以秒为单位)
+        String signatureRawStr = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
+        log.info("待签名的字符串内容是:{}", signatureRawStr);
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("appId", wxConfig.getAppID());
         jsonObject.put("timestamp", timestamp);
         jsonObject.put("nonceStr", noncestr);
-        jsonObject.put("signature", DigestUtils.sha1Hex(str));
+        jsonObject.put("signature", DigestUtils.sha1Hex(signatureRawStr));
+
+        log.info("返回结果:{}", jsonObject);
 
         return new ResponseEntity<>(jsonObject, HttpStatus.OK);
     }
@@ -159,7 +194,6 @@ public class AuthorizationController {
     @ApiOperation("登录授权")
     @AnonymousPostMapping(value = "/login")
     public ResponseEntity<Object> login(@Validated @RequestBody AuthUserDto authUser, HttpServletRequest request) throws Exception {
-        log.info("测试输出日志................");
         // 密码解密
         String password = RsaUtils.decryptByPrivateKey(RsaProperties.privateKey, authUser.getPassword());
         // 查询验证码
