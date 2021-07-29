@@ -15,6 +15,7 @@
 */
 package me.tiger.modules.works.service.impl;
 
+import io.jsonwebtoken.lang.Collections;
 import lombok.RequiredArgsConstructor;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksArticle;
@@ -31,6 +32,7 @@ import me.tiger.utils.FileUtil;
 import me.tiger.utils.PageUtil;
 import me.tiger.utils.QueryHelp;
 import me.tiger.utils.ValidationUtil;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -148,7 +150,31 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     }
 
     @Override
-    public Page<WorksInfo> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable) {
-        return worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType(), pageable);
+    public Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable) {
+        Page<WorksInfo> worksInfoList = worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType(), pageable);
+
+        List<WorksInfoDto> worksInfoDtos = worksInfoList.getContent().stream().map(worksInfo -> {
+
+            WorksInfoDto dto = new WorksInfoDto();
+            BeanUtils.copyProperties(worksInfo, dto);
+            //文字类
+            if (worksInfo.getType() == 0) {
+                List<WorksArticle> worksArticleList = worksArticleRepository.findAll(Example.of(WorksArticle.builder().worksId(worksInfo.getId()).build()));
+                if (!Collections.isEmpty(worksArticleList)) {
+                    dto.setArticleContent(worksArticleList.get(0).getArticleContent());
+                }
+            } else {
+                //图片或者视频类
+                List<WorksFiles> worksFilesList = worksFilesRepository.findAll(Example.of(WorksFiles.builder().worksId(worksInfo.getId()).build()));
+                List<String> filePathList = worksFilesList.stream().map(WorksFiles::getRelativeFilePath).collect(Collectors.toList());
+                dto.setFiles(filePathList);
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
+
+        Long totalElements = worksInfoList.getTotalElements();
+
+        return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
     }
 }

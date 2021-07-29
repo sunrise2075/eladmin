@@ -50,6 +50,15 @@ public class PageUtil extends cn.hutool.core.util.PageUtil {
         return map;
     }
 
+    public static Map<String,Object> toPage(int total, int pageSize, int pageNum, List content) {
+        Map<String,Object> map = new LinkedHashMap<>(2);
+        map.put("content",content);
+        map.put("totalElements",total);
+        map.put("pageSize", pageSize);
+        map.put("pageNum", pageNum);
+        return map;
+    }
+
     /**
      * 自定义分页
      */

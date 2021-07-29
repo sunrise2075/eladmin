@@ -18,7 +18,6 @@ package me.tiger.modules.works.service;
 import me.tiger.modules.works.domain.WorksInfo;
 import me.tiger.modules.works.service.dto.WorksInfoDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.Map;
 import java.util.List;
@@ -98,5 +97,5 @@ public interface WorksInfoService {
      * */
     void saveWorksInfoWithFiles(WorksInfo worksInfo, List<String> pathList);
 
-    Page<WorksInfo> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable);
+    Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable);
 }
