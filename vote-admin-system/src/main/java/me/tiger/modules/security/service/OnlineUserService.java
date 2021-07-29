@@ -214,9 +214,6 @@ public class OnlineUserService {
             log.error(e.getMessage(),e);
         }
         redisUtils.set(getOnlienTokenKey(token), onlineUserDto, properties.getTokenValidityInSeconds()/1000);
-
-        redisUtils.set(getOnlienTokenKey(token), token, properties.getTokenValidityInSeconds()/1000);
-
         return token;
     }
 

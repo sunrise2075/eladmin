@@ -74,7 +74,7 @@ public class WorksInfoController {
     @PostMapping(value = "/vote")
     @Log("投票")
     @ApiOperation("投票")
-    @PreAuthorize("@el.check('worksInfo:add')")
+//    @PreAuthorize("@el.check('worksInfo:add')")
     public ResponseEntity<Object> voteWorksInfo(@RequestBody VoteDto voteDto) {
 
         worksInfoService.voteWorksInfo(voteDto);
@@ -85,7 +85,7 @@ public class WorksInfoController {
     @GetMapping
     @Log("查询作品信息")
     @ApiOperation("查询作品信息")
-    @PreAuthorize("@el.check('worksInfo:list')")
+//    @PreAuthorize("@el.check('worksInfo:list')")
     public ResponseEntity<Object> query(WorksInfoQueryCriteria criteria, Pageable pageable) {
         Map<String, Object> worksInfo = worksInfoService.findWorksInfo(criteria, pageable);
 
@@ -102,7 +102,7 @@ public class WorksInfoController {
 
     @Log("创建文章类参赛作品")
     @ApiOperation("创建文章类参赛作品")
-    @PreAuthorize("@el.check('worksInfo:add')")
+//    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/article")
     public ResponseEntity<JSONObject> createParagraph(@RequestParam("username") String userName,
                                                       @RequestParam("phone") String phone,
@@ -123,7 +123,7 @@ public class WorksInfoController {
 
     @Log("创建图片类参赛作品")
     @ApiOperation("创建图片类参赛作品")
-    @PreAuthorize("@el.check('worksInfo:add')")
+//    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/images")
     public ResponseEntity<JSONObject> createImagesWork(@RequestParam("username") String userName,
                                                        @RequestParam("phone") String phone,
@@ -165,7 +165,7 @@ public class WorksInfoController {
     @PostMapping(value = "/video", headers = "content-type=multipart/form-data")
     @Log("创建视频类参赛作品")
     @ApiOperation("为作品上传视频")
-    @PreAuthorize("@el.check('worksInfo:add')")
+//    @PreAuthorize("@el.check('worksInfo:add')")
     public ResponseEntity<JSONObject> createVideoWorks(@RequestParam("username") String userName,
                                                        @RequestParam("phone") String phone,
                                                        @RequestParam("description") String description,
