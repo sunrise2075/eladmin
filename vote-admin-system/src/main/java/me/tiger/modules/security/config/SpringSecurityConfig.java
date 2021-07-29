@@ -21,6 +21,7 @@ import me.tiger.modules.security.config.bean.SecurityProperties;
 import me.tiger.modules.security.security.*;
 import me.tiger.modules.security.service.OnlineUserService;
 import me.tiger.modules.security.service.UserCacheClean;
+import me.tiger.modules.works.constant.ResourceConstant;
 import me.tiger.utils.enums.RequestMethodEnum;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -126,6 +127,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/swagger-ui.html").permitAll()
                 .antMatchers("/swagger-resources/**").permitAll()
                 .antMatchers("/webjars/**").permitAll()
+                .antMatchers(ResourceConstant.STATIC_FILE_PATTERN).permitAll()
                 .antMatchers("/*/api-docs").permitAll()
                 // 文件
                 .antMatchers("/avatar/**").permitAll()
