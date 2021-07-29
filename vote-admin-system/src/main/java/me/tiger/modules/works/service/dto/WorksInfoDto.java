@@ -15,7 +15,10 @@
 */
 package me.tiger.modules.works.service.dto;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import javax.persistence.Column;
 import java.sql.Timestamp;
 import java.io.Serializable;
 import java.util.List;
@@ -40,6 +43,19 @@ public class WorksInfoDto implements Serializable {
 
     /** 作品描述 */
     private String selfDescription;
+
+
+    /**
+     * 是否获奖: 0 -  没有获奖    1 -  已经获奖
+     *
+     * */
+    private Integer winFlag;
+
+
+    /**
+     *  得票总数
+     * */
+    private Integer voteCount;
 
     /** 作品种类: 0. 文字类  1. 图片类  2. 视频类 */
     private Integer type;

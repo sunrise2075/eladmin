@@ -61,6 +61,14 @@ public class WorksInfo implements Serializable {
     @ApiModelProperty(value = "作品描述")
     private String selfDescription;
 
+    @Column(name = "win_flag")
+    @ApiModelProperty(value = "是否获奖: 0 -  没有获奖    1 -  已经获奖")
+    private Integer winFlag;
+
+    @Column(name = "vote_count")
+    @ApiModelProperty(value = "得票总数")
+    private Integer voteCount;
+
     @Column(name = "type")
     @ApiModelProperty(value = "作品种类: 0. 文字类  1. 图片类  2. 视频类")
     private Integer type;
