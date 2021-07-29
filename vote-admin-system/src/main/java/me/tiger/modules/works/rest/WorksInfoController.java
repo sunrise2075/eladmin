@@ -70,7 +70,7 @@ public class WorksInfoController {
     @ApiOperation("查询作品信息")
     @PreAuthorize("@el.check('worksInfo:list')")
     public ResponseEntity<Object> query(WorksInfoQueryCriteria criteria, Pageable pageable) {
-        return new ResponseEntity<>(worksInfoService.queryAll(criteria, pageable), HttpStatus.OK);
+        return new ResponseEntity<>(worksInfoService.findWorksInfo(criteria, pageable), HttpStatus.OK);
     }
 
     @PostMapping

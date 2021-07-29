@@ -15,6 +15,8 @@
 */
 package me.tiger.modules.works.service.dto;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import java.util.List;
 import me.tiger.annotation.Query;
@@ -25,5 +27,15 @@ import me.tiger.annotation.Query;
 * @date 2021-07-24
 **/
 @Data
+@ApiModel(value = "作品信息查询条件")
 public class WorksInfoQueryCriteria{
+
+    @ApiModelProperty(value = "作品类型: 0. 文字类  1. 图片类  2. 视频类", dataType = "integer", allowableValues = "0,1,2")
+    private Integer type;
+
+    @ApiModelProperty(value = "作者手机号")
+    private String authorMobile;
+
+    @ApiModelProperty(value = "作者姓名")
+    private String authorName;
 }

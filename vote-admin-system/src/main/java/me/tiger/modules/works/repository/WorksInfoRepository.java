@@ -16,8 +16,11 @@
 package me.tiger.modules.works.repository;
 
 import me.tiger.modules.works.domain.WorksInfo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 /**
 * @website https://el-admin.vip
@@ -25,4 +28,11 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 * @date 2021-07-24
 **/
 public interface WorksInfoRepository extends JpaRepository<WorksInfo, Integer>, JpaSpecificationExecutor<WorksInfo> {
+
+    @Query(nativeQuery = true,
+            value = "select w.* from works_info w where " +
+                    "if (?1 !=''|null, w.author_name like concat('%', ?1, '%') ,1=1) " +
+                    "or if(?2 !=''|null, w.author_mobile like concat('%', ?2, '%'), 2=2)  " +
+                    "or w.type = ?3")
+    Page<WorksInfo> findWorksInfo(String authorName, String authorMobile, Integer type, Pageable pageable);
 }

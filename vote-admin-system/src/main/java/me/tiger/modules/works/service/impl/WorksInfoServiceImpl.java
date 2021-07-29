@@ -15,32 +15,34 @@
 */
 package me.tiger.modules.works.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksArticle;
 import me.tiger.modules.works.domain.WorksFiles;
 import me.tiger.modules.works.domain.WorksInfo;
 import me.tiger.modules.works.repository.WorksArticleRepository;
 import me.tiger.modules.works.repository.WorksFilesRepository;
-import me.tiger.utils.ValidationUtil;
-import me.tiger.utils.FileUtil;
-import lombok.RequiredArgsConstructor;
 import me.tiger.modules.works.repository.WorksInfoRepository;
 import me.tiger.modules.works.service.WorksInfoService;
 import me.tiger.modules.works.service.dto.WorksInfoDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import me.tiger.modules.works.service.mapstruct.WorksInfoMapper;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import me.tiger.utils.FileUtil;
 import me.tiger.utils.PageUtil;
 import me.tiger.utils.QueryHelp;
-import java.util.List;
-import java.util.Map;
-import java.io.IOException;
+import me.tiger.utils.ValidationUtil;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -60,7 +62,8 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
     @Override
     public Map<String,Object> queryAll(WorksInfoQueryCriteria criteria, Pageable pageable){
-        Page<WorksInfo> page = worksInfoRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root,criteria,criteriaBuilder),pageable);
+        WorksInfo worksInfo = WorksInfo.builder().authorName(criteria.getAuthorName()).authorMobile(criteria.getAuthorMobile()).type(criteria.getType()).build();
+        Page<WorksInfo> page = worksInfoRepository.findAll(Example.of(worksInfo), pageable);
         return PageUtil.toPage(page.map(worksInfoMapper::toDto));
     }
 
@@ -142,5 +145,10 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
             worksFilesRepository.saveAll(worksFilesList);
         }
+    }
+
+    @Override
+    public Page<WorksInfo> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable) {
+        return worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType(), pageable);
     }
 }
