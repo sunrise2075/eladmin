@@ -46,8 +46,8 @@ task:
     queue-capacity: 50
 
 wx:
-  appID: wxaf36c67f6b3ece3d
-  appsecret: 26fdd3258c1067005c172cab698ec3fe
+  appID: wx7b90fc6badc4e29c
+  appsecret: f4ef435844da10337d94c848caa6c73c
 
 
 

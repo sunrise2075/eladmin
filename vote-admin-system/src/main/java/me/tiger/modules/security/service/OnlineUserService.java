@@ -16,12 +16,16 @@
 package me.tiger.modules.security.service;
 
 import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.mp.bean.result.WxMpUser;
+import me.tiger.modules.security.security.TokenProvider;
+import me.tiger.modules.security.security.WxAuthenticationToken;
 import me.tiger.utils.*;
 import me.tiger.modules.security.config.bean.SecurityProperties;
 import me.tiger.modules.security.service.dto.JwtUserDto;
 import me.tiger.modules.security.service.dto.OnlineUserDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,10 +42,12 @@ public class OnlineUserService {
 
     private final SecurityProperties properties;
     private final RedisUtils redisUtils;
+    private final TokenProvider tokenProvider;
 
-    public OnlineUserService(SecurityProperties properties, RedisUtils redisUtils) {
+    public OnlineUserService(SecurityProperties properties, RedisUtils redisUtils, TokenProvider tokenProvider) {
         this.properties = properties;
         this.redisUtils = redisUtils;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -61,7 +67,7 @@ public class OnlineUserService {
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
-        redisUtils.set(properties.getOnlineKey() + token, onlineUserDto, properties.getTokenValidityInSeconds()/1000);
+        redisUtils.set(getOnlienTokenKey(token), onlineUserDto, properties.getTokenValidityInSeconds()/1000);
     }
 
     /**
@@ -84,7 +90,7 @@ public class OnlineUserService {
      * @return /
      */
     public List<OnlineUserDto> getAll(String filter){
-        List<String> keys = redisUtils.scan(properties.getOnlineKey() + "*");
+        List<String> keys = redisUtils.scan(getOnlienTokenKey("*"));
         Collections.reverse(keys);
         List<OnlineUserDto> onlineUserDtos = new ArrayList<>();
         for (String key : keys) {
@@ -106,7 +112,7 @@ public class OnlineUserService {
      * @param key /
      */
     public void kickOut(String key){
-        key = properties.getOnlineKey() + key;
+        key = getOnlienTokenKey(key);
         redisUtils.del(key);
     }
 
@@ -115,7 +121,7 @@ public class OnlineUserService {
      * @param token /
      */
     public void logout(String token) {
-        String key = properties.getOnlineKey() + token;
+        String key = getOnlienTokenKey(token);
         redisUtils.del(key);
     }
 
@@ -187,5 +193,34 @@ public class OnlineUserService {
                 kickOut(token);
             }
         }
+    }
+
+    /**
+     * 保存微信用户的登录信息
+     * @param authentication
+     * @param wxMpUser
+     * @return*/
+    public String saveWxUserInfo(Authentication authentication, WxMpUser wxMpUser, HttpServletRequest request) {
+        String openId = (String) authentication.getPrincipal();
+        String token = tokenProvider.createToken(authentication);
+
+        String ip = StringUtils.getIp(request);
+        String browser = StringUtils.getBrowser(request);
+        String address = StringUtils.getCityInfo(ip);
+        OnlineUserDto onlineUserDto = null;
+        try {
+            onlineUserDto = new OnlineUserDto(wxMpUser.getOpenId(), wxMpUser.getNickname(), "wxVisitor", browser , ip, address, EncryptUtils.desEncrypt(token), new Date());
+        } catch (Exception e) {
+            log.error(e.getMessage(),e);
+        }
+        redisUtils.set(getOnlienTokenKey(token), onlineUserDto, properties.getTokenValidityInSeconds()/1000);
+
+        redisUtils.set(getOnlienTokenKey(token), token, properties.getTokenValidityInSeconds()/1000);
+
+        return token;
+    }
+
+    private String getOnlienTokenKey(String token) {
+        return properties.getOnlineKey() + token;
     }
 }

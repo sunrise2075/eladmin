@@ -16,14 +16,16 @@
 package me.tiger.modules.security.rest;
 
 import cn.hutool.core.util.IdUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.wf.captcha.base.Captcha;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.chanjar.weixin.common.error.WxErrorException;
 import me.chanjar.weixin.mp.api.WxMpService;
+import me.chanjar.weixin.mp.bean.result.WxMpOAuth2AccessToken;
+import me.chanjar.weixin.mp.bean.result.WxMpUser;
 import me.tiger.annotation.rest.AnonymousDeleteMapping;
 import me.tiger.annotation.rest.AnonymousGetMapping;
 import me.tiger.annotation.rest.AnonymousPostMapping;
@@ -34,15 +36,16 @@ import me.tiger.modules.security.config.bean.LoginCodeEnum;
 import me.tiger.modules.security.config.bean.LoginProperties;
 import me.tiger.modules.security.config.bean.SecurityProperties;
 import me.tiger.modules.security.security.TokenProvider;
+import me.tiger.modules.security.security.WxAuthenticationToken;
 import me.tiger.modules.security.service.OnlineUserService;
 import me.tiger.modules.security.service.dto.AuthUserDto;
 import me.tiger.modules.security.service.dto.JwtUserDto;
-import me.tiger.util.*;
+import me.tiger.modules.system.service.UserService;
+import me.tiger.util.SignUtil;
 import me.tiger.utils.RedisUtils;
 import me.tiger.utils.RsaUtils;
 import me.tiger.utils.SecurityUtils;
 import me.tiger.utils.StringUtils;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,13 +59,12 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static me.tiger.modules.works.constant.ResponseConstant.*;
 
 /**
  * @author Zheng Jie
@@ -85,47 +87,13 @@ public class AuthorizationController {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final WXAccountConfig wxConfig;
     private final WxMpService wxMpService;
+    private final UserService userService;
 
     @Value("${server.domain:5847f71879aa.ngrok.io}")
     private String serverDomain;
 
     @Resource
     private LoginProperties loginProperties;
-
-
-    @ApiOperation("微信登录接口")
-    @RequestMapping("/wxLogin")
-    public void wxLogin(HttpServletResponse response) throws IOException, IOException {
-
-        //请求获取code的回调地址
-        String callBack = String.format("http://%s/%s", serverDomain, "auth/wxCallBack");
-        //请求地址
-        String url = String.format(WXAccountConfig.WX_OATH_LOGIN_URL, wxConfig.getAppID(), URLEncoder.encode(callBack));
-        //重定向
-        response.sendRedirect(url);
-    }
-
-    @ApiOperation("获取微信JS-SDK签名")
-    @RequestMapping("/wxCallback")
-    public void wxCallBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
-        String code = request.getParameter("code");
-
-        //获取access_token
-        String url = String.format(WXAccountConfig.WX_ACCESS_TOKEN_URL, wxConfig.getAppID(), wxConfig.getAppsecret(), code);
-        String result = HttpClientUtil.doGet(url);
-
-        System.out.println("请求获取access_token:" + result);
-        //返回结果的json对象
-        JSONObject resultObject = JSON.parseObject(result);
-
-        //请求获取userInfo
-        String infoUrl = String.format(WXAccountConfig.WX_USER_INFO_URL, resultObject.getString("access_token"), resultObject.getString("openid"));
-
-        String resultInfo = HttpClientUtil.doGet(infoUrl);
-        //此时已获取到userInfo，再根据业务进行处理
-        System.out.println("请求获取userInfo:" + resultInfo);
-    }
 
     @ApiOperation("微信验证服务器所需接口")
     @AnonymousGetMapping(value = "/wxCheckServer")
@@ -149,46 +117,41 @@ public class AuthorizationController {
 
     }
 
-    @ApiOperation("获取微信JS-SDK签名")
-    @AnonymousPostMapping(value = "/getWXJSSDKSignature")
-    public ResponseEntity<JSONObject> getJSSDKSignature(@RequestParam(value = "url", required = true) String url) {
-        log.info("getJSSDKSignature接口开始被调用，用户输入url:{}", url);
+    /**
+     * 初次授权获取用户信息
+     *
+     * @param code
+     * @param returnUrl
+     * @return
+     */
+    @AnonymousGetMapping("/wx/userInfo")
+    public ResponseEntity<JSONObject> userInfo(@RequestParam("code") String code, HttpServletRequest request) {
+        WxMpOAuth2AccessToken wxMpOAuth2AccessToken;
+        WxMpUser wxMpUser;
+        try {
+            // 使用code换取access_token信息
+            wxMpOAuth2AccessToken = wxMpService.oauth2getAccessToken(code);
+            wxMpUser = wxMpService.oauth2getUserInfo(wxMpOAuth2AccessToken, null);
 
-        String access_token;
-        if (redisUtils.hasKey(ACCESS_TOKEN)) {
-            access_token = (String) redisUtils.get(ACCESS_TOKEN);
-        }else {
-            String tokenUrl = String.format("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s", wxConfig.getAppID(), wxConfig.getAppsecret());
-            String tokenJson = HttpUtil.get(tokenUrl, null);
-            log.info("微信接口获取ACCESS_TOKEN:   调用url   :{},    返回结果:   {}", tokenUrl, tokenJson);
-            access_token = JSONUtil.getString(tokenJson, ACCESS_TOKEN);
-            redisUtils.set(ACCESS_TOKEN, access_token, 7000L);
+            String openId = wxMpOAuth2AccessToken.getOpenId();
+            log.info("【微信网页授权】获取openId，openId = {}", openId);
+
+            // 保存在线信息
+            // 返回 token 与 用户信息
+            WxAuthenticationToken wxAuthenticationToken = new WxAuthenticationToken(code, openId);
+            SecurityContextHolder.getContext().setAuthentication(wxAuthenticationToken);
+            String token = onlineUserService.saveWxUserInfo(wxAuthenticationToken, wxMpUser, request);
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("user", wxMpUser);
+            jsonObject.put("token", String.format("%s%s", properties.getTokenStartWith(), token));
+
+            return new ResponseEntity<>(buildResult(SUCCESS, "微信用户信息获取成功", jsonObject), HttpStatus.CREATED);
+
+        } catch (WxErrorException e) {
+            log.error("【微信网页授权】异常，{}", e);
+            return new ResponseEntity<>(buildResult(FAIL, e.getMessage(), null), HttpStatus.CREATED);
         }
-
-        String ticket;
-        if (redisUtils.hasKey(TICKET)) {
-            ticket = (String) redisUtils.get(TICKET);
-        }else {
-            String ticketJson = HttpUtil.get(String.format("https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi", access_token), null);
-            ticket = JSONUtil.getString(ticketJson, TICKET);  // ticket
-            redisUtils.set(TICKET, ticket, 7000L);
-            log.info("从微信接口获取道德ticket结果是:   {}", ticket);
-        }
-
-        String noncestr = UUIDUtil.randomUUID8();  // 随机字符串
-        long timestamp = new Date().getTime() / 1000;  // 时间戳(以秒为单位)
-        String signatureRawStr = String.format("jsapi_ticket=%s&noncestr=%s&timestamp=%d&url=%s", ticket, noncestr, timestamp, url);
-        log.info("待签名的字符串内容是:{}", signatureRawStr);
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("appId", wxConfig.getAppID());
-        jsonObject.put("timestamp", timestamp);
-        jsonObject.put("nonceStr", noncestr);
-        jsonObject.put("signature", DigestUtils.sha1Hex(signatureRawStr));
-
-        log.info("返回结果:{}", jsonObject);
-
-        return new ResponseEntity<>(jsonObject, HttpStatus.OK);
     }
 
     @ApiOperation("登录授权")

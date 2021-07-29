@@ -1,0 +1,16 @@
+{
+  "msg": "微信用户信息获取成功",
+  "code": 1,
+  "data": {
+    "city": "深圳",
+    "country": "中国",
+    "headImgUrl": "https://thirdwx.qlogo.cn/mmopen/vi_32/DcMLKiaDUbZqt48On2mhMdSIqzmj6PthNqfiaXothI6X9pD7kWfuQDwzQgNvljXA0o2lq7TC1hQYhibv8jBxEyg5g/132",
+    "language": "zh_CN",
+    "nickname": "曹少蓬",
+    "openId": "oDTu2w4_pD8GkZiyp0azQ6wG0XWY",
+    "privileges": [],
+    "province": "广东",
+    "sex": 1,
+    "sexDesc": "男"
+  }
+}

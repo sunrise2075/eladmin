@@ -79,7 +79,7 @@ public class WorksInfoController {
 
         worksInfoService.voteWorksInfo(voteDto);
 
-        return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "投票成功", null), HttpStatus.OK);
+        return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "投票成功", null), HttpStatus.OK);
     }
 
     @GetMapping
@@ -89,7 +89,7 @@ public class WorksInfoController {
     public ResponseEntity<Object> query(WorksInfoQueryCriteria criteria, Pageable pageable) {
         Map<String, Object> worksInfo = worksInfoService.findWorksInfo(criteria, pageable);
 
-        return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
+        return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
     }
 
     @PostMapping
@@ -115,9 +115,9 @@ public class WorksInfoController {
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
             worksInfoService.saveArticle(worksInfo, article);
-            return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
         }
     }
 
@@ -131,7 +131,7 @@ public class WorksInfoController {
                                                        @RequestParam("images") MultipartFile[] images) {
 
         if (images.length == 0) {
-            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, "图片列表不能为空，请上传作品有关图片", null), HttpStatus.CREATED);
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, "图片列表不能为空，请上传作品有关图片", null), HttpStatus.CREATED);
         }
 
         try {
@@ -150,16 +150,16 @@ public class WorksInfoController {
                     imageFile.transferTo(path);
                     pathList.add(getFileRelativeUrl(relativeFilePath));
                 } catch (IOException e) {
-                    return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
+                    return new ResponseEntity<>(ResponseConstant.buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
                 }
             }
 
             worksInfoService.saveWorksInfoWithFiles(worksInfo, pathList);
         } catch (Exception e) {
-            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
         }
 
-        return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
+        return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/video", headers = "content-type=multipart/form-data")
@@ -172,7 +172,7 @@ public class WorksInfoController {
                                                        @RequestParam("video") MultipartFile video) {
 
         if (video.isEmpty()) {
-            JSONObject jsonObject = buildResult(0, "文件为空,请选择你的文件上传", null);
+            JSONObject jsonObject = ResponseConstant.buildResult(0, "文件为空,请选择你的文件上传", null);
             return new ResponseEntity<>(jsonObject, HttpStatus.NO_CONTENT);
         }
 
@@ -186,10 +186,10 @@ public class WorksInfoController {
             video.transferTo(path);
 
             worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(getFileRelativeUrl(relativeFilePath)));
-            return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
         } catch (IOException e) {
             log.info("上传视频发生错误", e);
-            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -198,14 +198,6 @@ public class WorksInfoController {
      */
     private String getFileRelativeUrl(String relativeFilePath) {
         return String.format("%S%s%s", ResourceConstant.STATIC_FILE_PATH, File.separator, relativeFilePath);
-    }
-
-    private JSONObject buildResult(int code, String message, Object data) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("code", code);
-        jsonObject.put("msg", message);
-        jsonObject.put("data", data);
-        return jsonObject;
     }
 
     @PutMapping
