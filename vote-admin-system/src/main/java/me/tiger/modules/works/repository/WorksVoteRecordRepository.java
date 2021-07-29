@@ -16,6 +16,7 @@
 package me.tiger.modules.works.repository;
 
 import me.tiger.modules.works.domain.WorksInfo;
+import me.tiger.modules.works.domain.WorksVoteRecord;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,12 +28,6 @@ import org.springframework.data.jpa.repository.Query;
 * @author tiger
 * @date 2021-07-24
 **/
-public interface WorksInfoRepository extends JpaRepository<WorksInfo, Integer>, JpaSpecificationExecutor<WorksInfo> {
+public interface WorksVoteRecordRepository extends JpaRepository<WorksVoteRecord, Integer>, JpaSpecificationExecutor<WorksVoteRecord> {
 
-    @Query(nativeQuery = true,
-            value = "select w.* from works_info w where " +
-                    "if (?1 !=''|null, w.author_name like concat('%', ?1, '%') ,1=1) " +
-                    "and if(?2 !=''|null, w.author_mobile like concat('%', ?2, '%'), 2=2)  " +
-                    "and w.type = ?3")
-    Page<WorksInfo> findWorksInfo(String authorName, String authorMobile, Integer type, Pageable pageable);
 }

@@ -16,6 +16,7 @@
 package me.tiger.modules.works.service;
 
 import me.tiger.modules.works.domain.WorksInfo;
+import me.tiger.modules.works.service.dto.VoteDto;
 import me.tiger.modules.works.service.dto.WorksInfoDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import org.springframework.data.domain.Pageable;
@@ -98,4 +99,6 @@ public interface WorksInfoService {
     void saveWorksInfoWithFiles(WorksInfo worksInfo, List<String> pathList);
 
     Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable);
+
+    void voteWorksInfo(VoteDto voteDto);
 }

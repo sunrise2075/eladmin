@@ -1,18 +1,18 @@
 /*
-*  Copyright 2019-2020 Zheng Jie
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*/
+ *  Copyright 2019-2020 Zheng Jie
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package me.tiger.modules.works.service.impl;
 
 import io.jsonwebtoken.lang.Collections;
@@ -21,10 +21,13 @@ import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksArticle;
 import me.tiger.modules.works.domain.WorksFiles;
 import me.tiger.modules.works.domain.WorksInfo;
+import me.tiger.modules.works.domain.WorksVoteRecord;
 import me.tiger.modules.works.repository.WorksArticleRepository;
 import me.tiger.modules.works.repository.WorksFilesRepository;
 import me.tiger.modules.works.repository.WorksInfoRepository;
+import me.tiger.modules.works.repository.WorksVoteRecordRepository;
 import me.tiger.modules.works.service.WorksInfoService;
+import me.tiger.modules.works.service.dto.VoteDto;
 import me.tiger.modules.works.service.dto.WorksInfoDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import me.tiger.modules.works.service.mapstruct.WorksInfoMapper;
@@ -41,18 +44,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
-* @website https://el-admin.vip
-* @description 服务实现
-* @author tiger
-* @date 2021-07-24
-**/
+ * @author tiger
+ * @website https://el-admin.vip
+ * @description 服务实现
+ * @date 2021-07-24
+ **/
 @Service
 @RequiredArgsConstructor
 public class WorksInfoServiceImpl implements WorksInfoService {
@@ -61,24 +61,25 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     private final WorksInfoMapper worksInfoMapper;
     private final WorksArticleRepository worksArticleRepository;
     private final WorksFilesRepository worksFilesRepository;
+    private final WorksVoteRecordRepository worksVoteRecordRepository;
 
     @Override
-    public Map<String,Object> queryAll(WorksInfoQueryCriteria criteria, Pageable pageable){
+    public Map<String, Object> queryAll(WorksInfoQueryCriteria criteria, Pageable pageable) {
         WorksInfo worksInfo = WorksInfo.builder().authorName(criteria.getAuthorName()).authorMobile(criteria.getAuthorMobile()).type(criteria.getType()).build();
         Page<WorksInfo> page = worksInfoRepository.findAll(Example.of(worksInfo), pageable);
         return PageUtil.toPage(page.map(worksInfoMapper::toDto));
     }
 
     @Override
-    public List<WorksInfoDto> queryAll(WorksInfoQueryCriteria criteria){
-        return worksInfoMapper.toDto(worksInfoRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root,criteria,criteriaBuilder)));
+    public List<WorksInfoDto> queryAll(WorksInfoQueryCriteria criteria) {
+        return worksInfoMapper.toDto(worksInfoRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root, criteria, criteriaBuilder)));
     }
 
     @Override
     @Transactional
     public WorksInfoDto findById(Integer id) {
         WorksInfo worksInfo = worksInfoRepository.findById(id).orElseGet(WorksInfo::new);
-        ValidationUtil.isNull(worksInfo.getId(),"WorksInfo","id",id);
+        ValidationUtil.isNull(worksInfo.getId(), "WorksInfo", "id", id);
         return worksInfoMapper.toDto(worksInfo);
     }
 
@@ -92,7 +93,7 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     @Transactional(rollbackFor = Exception.class)
     public void update(WorksInfo resources) {
         WorksInfo worksInfo = worksInfoRepository.findById(resources.getId()).orElseGet(WorksInfo::new);
-        ValidationUtil.isNull( worksInfo.getId(),"WorksInfo","id",resources.getId());
+        ValidationUtil.isNull(worksInfo.getId(), "WorksInfo", "id", resources.getId());
         worksInfo.copy(resources);
         worksInfoRepository.save(worksInfo);
     }
@@ -108,7 +109,7 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     public void download(List<WorksInfoDto> all, HttpServletResponse response) throws IOException {
         List<Map<String, Object>> list = new ArrayList<>();
         for (WorksInfoDto worksInfo : all) {
-            Map<String,Object> map = new LinkedHashMap<>();
+            Map<String, Object> map = new LinkedHashMap<>();
             map.put("作者姓名", worksInfo.getAuthorName());
             map.put("作者手机号", worksInfo.getAuthorMobile());
             map.put("作品描述", worksInfo.getSelfDescription());
@@ -139,7 +140,7 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         //2. 保存图片类作品
         WorksInfo savedWorks = worksInfoRepository.save(worksInfo);
 
-        if (Type.IMAGES.getCode().equals(savedWorks.getType())|| Type.VIDEO.getCode().equals(savedWorks.getType())) {
+        if (Type.IMAGES.getCode().equals(savedWorks.getType()) || Type.VIDEO.getCode().equals(savedWorks.getType())) {
 
             List<WorksFiles> worksFilesList = pathList.stream().map(s -> {
                 return WorksFiles.builder().worksId(savedWorks.getId()).relativeFilePath(s).build();
@@ -176,5 +177,23 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         Long totalElements = worksInfoList.getTotalElements();
 
         return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
+    }
+
+    @Override
+    @Transactional
+    public void voteWorksInfo(VoteDto voteDto) {
+        Optional<WorksInfo> optionalWorksInfo = worksInfoRepository.findById(voteDto.getWorksId());
+        if (optionalWorksInfo.isPresent()) {
+            //保存投票记录
+            WorksVoteRecord worksVoteRecord = WorksVoteRecord.builder().worksId(voteDto.getWorksId()).count(voteDto.getCount()).voterUserName(voteDto.getVoterUserName()).build();
+            worksVoteRecordRepository.save(worksVoteRecord);
+
+            WorksInfo worksInfo = optionalWorksInfo.get();
+            //更新总票数
+            Integer voteCount = worksInfo.getVoteCount();
+            voteCount = voteCount + voteDto.getCount();
+            worksInfo.setVoteCount(voteCount);
+            worksInfoRepository.save(worksInfo);
+        }
     }
 }

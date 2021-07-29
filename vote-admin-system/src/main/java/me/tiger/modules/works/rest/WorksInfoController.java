@@ -19,11 +19,14 @@ import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.tiger.annotation.Log;
 import me.tiger.modules.works.constant.LifeStatus;
+import me.tiger.modules.works.constant.ResponseConstant;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksInfo;
 import me.tiger.modules.works.service.WorksInfoService;
+import me.tiger.modules.works.service.dto.VoteDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -41,12 +44,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author tiger
  * @website https://el-admin.vip
  * @date 2021-07-24
  **/
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @Api(tags = "作品信息管理")
@@ -65,12 +70,25 @@ public class WorksInfoController {
         worksInfoService.download(worksInfoService.queryAll(criteria), response);
     }
 
+    @PostMapping(value = "/vote")
+    @Log("投票")
+    @ApiOperation("投票")
+    @PreAuthorize("@el.check('worksInfo:add')")
+    public ResponseEntity<Object> voteWorksInfo(@RequestBody VoteDto voteDto) {
+
+        worksInfoService.voteWorksInfo(voteDto);
+
+        return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "投票成功", null), HttpStatus.OK);
+    }
+
     @GetMapping
     @Log("查询作品信息")
     @ApiOperation("查询作品信息")
     @PreAuthorize("@el.check('worksInfo:list')")
     public ResponseEntity<Object> query(WorksInfoQueryCriteria criteria, Pageable pageable) {
-        return new ResponseEntity<>(worksInfoService.findWorksInfo(criteria, pageable), HttpStatus.OK);
+        Map<String, Object> worksInfo = worksInfoService.findWorksInfo(criteria, pageable);
+
+        return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
     }
 
     @PostMapping
@@ -96,9 +114,9 @@ public class WorksInfoController {
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
             worksInfoService.saveArticle(worksInfo, article);
-            return new ResponseEntity<>(buildResult(1, "保存成功", null), HttpStatus.CREATED);
+            return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
+            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
         }
     }
 
@@ -112,7 +130,7 @@ public class WorksInfoController {
                                                        @RequestParam("images") MultipartFile[] images) {
 
         if (images.length == 0) {
-            return new ResponseEntity<>(buildResult(0, "图片列表不能为空，请上传作品有关图片", null), HttpStatus.CREATED);
+            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, "图片列表不能为空，请上传作品有关图片", null), HttpStatus.CREATED);
         }
 
         try {
@@ -137,10 +155,10 @@ public class WorksInfoController {
 
             worksInfoService.saveWorksInfoWithFiles(worksInfo, pathList);
         } catch (Exception e) {
-            return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
+            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
         }
 
-        return new ResponseEntity<>(buildResult(1, "保存成功", null), HttpStatus.CREATED);
+        return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
     }
 
     @PostMapping(value = "/video", headers = "content-type=multipart/form-data")
@@ -167,17 +185,16 @@ public class WorksInfoController {
             video.transferTo(path);
 
             worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(getFileRelativeUrl(relativeFilePath)));
-            return new ResponseEntity<>(buildResult(0, "保存成功", null), HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
         } catch (IOException e) {
-
-            return new ResponseEntity<>(buildResult(0, e.getMessage(), null), HttpStatus.UNPROCESSABLE_ENTITY);
+            log.info("上传视频发生错误", e);
+            return new ResponseEntity<>(buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.UNPROCESSABLE_ENTITY);
         }
     }
 
     /**
      * 组成用于在网页上显示图片或者加载视频的URL相对路径
-     *
-     * */
+     */
     private String getFileRelativeUrl(String relativeFilePath) {
         return String.format("view%s%s", File.separator, relativeFilePath);
     }
