@@ -165,7 +165,6 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
             WorksInfoDto dto = new WorksInfoDto();
             BeanUtils.copyProperties(worksInfo, dto);
-
             dto.setHeadImgUrl(headImgs.getOrDefault(worksInfo.getWxOpenId(), ""));
 
             //文字类
