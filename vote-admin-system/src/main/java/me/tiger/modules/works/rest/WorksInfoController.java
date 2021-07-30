@@ -203,7 +203,7 @@ public class WorksInfoController {
      * 组成用于在网页上显示图片或者加载视频的URL相对路径
      */
     private String getFileRelativeUrl(String relativeFilePath) {
-        return String.format("%S%s%s", ResourceConstant.STATIC_FILE_PATH, File.separator, relativeFilePath);
+        return String.format("%s%s%s", ResourceConstant.STATIC_FILE_PATH, File.separator, relativeFilePath);
     }
 
     @PutMapping
