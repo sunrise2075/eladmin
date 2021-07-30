@@ -4,18 +4,22 @@
 drop table if exists works_info;
 create table works_info
 (
+    win_flag         tinyint   default 0                 null comment '0 -  没有获奖    1 -  已经获奖',
+    vote_count       int       default 0                 null comment '得票总数',
+    life_status      tinyint                             null comment '作品状态：1. 提交  2. 审核中  3. 审核通过  4. 审核拒绝 5. 获奖',
+    created_date     timestamp default CURRENT_TIMESTAMP null,
+    created_by       varchar(50)                         null comment '创建人',
+    updated_by       varchar(50)                         null comment '更新人',
+    updated_date     timestamp null default null,
+    type             tinyint                             null comment '作品种类: 0. 文字类  1. 图片类  2. 视频类',
     id               int auto_increment
         primary key,
-    author_name      varchar(100)                       null comment '作者姓名',
-    author_mobile    varchar(50)                        null comment '作者手机号',
-    self_description varchar(200)                       null comment '作品描述',
-    type             tinyint                            null comment '作品种类: 0. 文字类  1. 图片类  2. 视频类',
-    life_status      tinyint                            null comment '作品状态：1. 提交  2. 审核中  3. 审核通过  4. 审核拒绝 5. 获奖',
-    created_date     timestamp default CURRENT_TIMESTAMP null,
-    created_by       varchar(50)                        null comment '创建人',
-    updated_by       varchar(50)                        null comment '更新人',
-    updated_date     timestamp default CURRENT_TIMESTAMP null
-) comment '作品信息';
+    author_name      varchar(100)                        null comment '作者姓名',
+    author_mobile    varchar(50)                         null comment '作者手机号',
+    self_description varchar(200)                        null comment '作品描述'
+)
+    comment '作品信息';
+
 
 drop table if exists works_files;
 create table works_files

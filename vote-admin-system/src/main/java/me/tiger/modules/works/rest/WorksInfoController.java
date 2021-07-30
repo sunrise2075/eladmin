@@ -104,7 +104,7 @@ public class WorksInfoController {
     @ApiOperation("创建文章类参赛作品")
 //    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/article")
-    public ResponseEntity<JSONObject> createParagraph(@RequestParam("username") String userName,
+    public ResponseEntity<JSONObject> createParagraph(@RequestParam("userName") String userName,
                                                       @RequestParam("phone") String phone,
                                                       @RequestParam("description") String description,
                                                       @RequestParam("article") String article) {
