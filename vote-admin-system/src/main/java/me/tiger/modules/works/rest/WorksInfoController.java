@@ -185,7 +185,7 @@ public class WorksInfoController {
         String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), video.getOriginalFilename());
         try {
             WorksInfo worksInfo = WorksInfo.builder()
-                    .type(Type.IMAGES.getCode())
+                    .type(Type.VIDEO.getCode())
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
             Path path = FILE_ROOT.resolve(relativeFilePath);
