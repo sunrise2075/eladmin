@@ -199,9 +199,9 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     }
 
     @Override
-    public Map<String, Object> findWorksInfoWithWinFlag(Pageable pageable) {
+    public Map<String, Object> findWorksInfo(Integer winFlag, Pageable pageable) {
 
-        Page<WorksInfo> worksInfos = worksInfoRepository.findWorksInfoWithWinFlag(pageable);
+        Page<WorksInfo> worksInfos = worksInfoRepository.findWorksInfo(winFlag, pageable);
 
         if (!CollectionUtils.isEmpty(worksInfos.getContent())) {
 

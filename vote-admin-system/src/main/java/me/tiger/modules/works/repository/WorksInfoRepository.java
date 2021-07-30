@@ -36,6 +36,6 @@ public interface WorksInfoRepository extends JpaRepository<WorksInfo, Integer>, 
                     "and w.type = ?3 order by w.created_date desc")
     Page<WorksInfo> findWorksInfo(String authorName, String authorMobile, Integer type, Pageable pageable);
 
-    @Query(nativeQuery = true, value = "select w.* from works_info w  where w.win_flag=1 order by w.vote_count desc")
-    Page<WorksInfo> findWorksInfoWithWinFlag(Pageable pageable);
+    @Query(nativeQuery = true, value = "select w.* from works_info w  where if(?1=null,w.win_flag=?1, 1=1)  order by w.vote_count desc")
+    Page<WorksInfo> findWorksInfo(Integer winFlag, Pageable pageable);
 }

@@ -109,7 +109,11 @@ public interface WorksInfoService {
     void voteWorksInfo(VoteDto voteDto) throws IllegalAccessException;
 
     /**
-     * 查询获奖作品的列表，按照投票数量倒序排序
+     * 查询作品的列表，按照投票数量倒序排序
+     *
+     * @param winFlag
+     *
+     *
      * */
-    Map<String, Object> findWorksInfoWithWinFlag(Pageable pageable);
+    Map<String, Object> findWorksInfo(Integer winFlag, Pageable pageable);
 }

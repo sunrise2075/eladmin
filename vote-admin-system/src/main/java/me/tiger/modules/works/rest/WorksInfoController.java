@@ -99,13 +99,13 @@ public class WorksInfoController {
         return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
     }
 
-    @GetMapping(value = "/winList")
+    @GetMapping(value = "/list")
     @Log("查询作品信息")
     @ApiOperation("查询作品信息")
 //    @PreAuthorize("@el.check('worksInfo:list')")
-    public ResponseEntity<Object> findWorksInfoWithWinFlag(Pageable pageable) {
+    public ResponseEntity<Object> findWorksInfoWithWinFlag(@RequestParam("winFlag") Integer winFlag, Pageable pageable) {
 
-        Map<String, Object> worksInfo = worksInfoService.findWorksInfoWithWinFlag(pageable);
+        Map<String, Object> worksInfo = worksInfoService.findWorksInfo(winFlag, pageable);
 
         return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
     }
@@ -185,8 +185,8 @@ public class WorksInfoController {
     @ApiOperation("为作品上传视频")
 //    @PreAuthorize("@el.check('worksInfo:add')")
     public ResponseEntity<JSONObject> createVideoWorks(@RequestHeader("openId") String openId, @RequestParam("username") String userName,
-                                                        @RequestParam("phone") String phone, @RequestParam("description") String description,
-                                                        @RequestParam("video") MultipartFile video) {
+                                                       @RequestParam("phone") String phone, @RequestParam("description") String description,
+                                                       @RequestParam("video") MultipartFile video) {
 
         if (video.isEmpty()) {
             JSONObject jsonObject = ResponseConstant.buildResult(0, "文件为空,请选择你的文件上传", null);
