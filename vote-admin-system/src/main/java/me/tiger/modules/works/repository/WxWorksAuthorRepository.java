@@ -19,6 +19,9 @@ import me.tiger.modules.works.domain.WorksArticle;
 import me.tiger.modules.works.domain.WxWorksAuthor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
 
 /**
  * @author tiger
@@ -26,4 +29,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * @date 2021-07-24
  **/
 public interface WxWorksAuthorRepository extends JpaRepository<WxWorksAuthor, Integer>, JpaSpecificationExecutor<WxWorksAuthor> {
+
+    @Query(nativeQuery = true, value = "select a.* from wx_works_author a where a.open_id in (?1)")
+    List<WxWorksAuthor> findAuthors(List<String> wxIds);
 }

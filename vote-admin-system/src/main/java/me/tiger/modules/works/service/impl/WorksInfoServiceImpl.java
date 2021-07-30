@@ -16,17 +16,10 @@
 package me.tiger.modules.works.service.impl;
 
 import io.jsonwebtoken.lang.Collections;
-import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import me.tiger.modules.works.constant.Type;
-import me.tiger.modules.works.domain.WorksArticle;
-import me.tiger.modules.works.domain.WorksFiles;
-import me.tiger.modules.works.domain.WorksInfo;
-import me.tiger.modules.works.domain.WorksVoteRecord;
-import me.tiger.modules.works.repository.WorksArticleRepository;
-import me.tiger.modules.works.repository.WorksFilesRepository;
-import me.tiger.modules.works.repository.WorksInfoRepository;
-import me.tiger.modules.works.repository.WorksVoteRecordRepository;
+import me.tiger.modules.works.domain.*;
+import me.tiger.modules.works.repository.*;
 import me.tiger.modules.works.service.WorksInfoService;
 import me.tiger.modules.works.service.dto.VoteDto;
 import me.tiger.modules.works.service.dto.WorksInfoDto;
@@ -43,6 +36,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -66,6 +60,7 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     private final WorksArticleRepository worksArticleRepository;
     private final WorksFilesRepository worksFilesRepository;
     private final WorksVoteRecordRepository worksVoteRecordRepository;
+    private final WxWorksAuthorRepository wxWorksAuthorRepository;
 
     @Value("${vote.limit:10}")
     private Integer voteLimit;
@@ -159,12 +154,20 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
     @Override
     public Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable) {
+
         Page<WorksInfo> worksInfoList = worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType(), pageable);
+
+        List<String> wxIds = worksInfoList.stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
+
+        Map<String, String> headImgs = getHeadImgUrlMapping(wxIds);
 
         List<WorksInfoDto> worksInfoDtos = worksInfoList.getContent().stream().map(worksInfo -> {
 
             WorksInfoDto dto = new WorksInfoDto();
             BeanUtils.copyProperties(worksInfo, dto);
+
+            dto.setHeadImgUrl(headImgs.getOrDefault(worksInfo.getWxOpenId(), ""));
+
             //文字类
             if (worksInfo.getType() == 0) {
                 List<WorksArticle> worksArticleList = worksArticleRepository.findAll(Example.of(WorksArticle.builder().worksId(worksInfo.getId()).build()));
@@ -184,6 +187,16 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         Long totalElements = worksInfoList.getTotalElements();
 
         return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
+    }
+
+    private Map<String, String> getHeadImgUrlMapping(List<String> wxIds) {
+        Map<String, String> headImgs;
+        if (CollectionUtils.isEmpty(wxIds)) {
+            headImgs = java.util.Collections.emptyMap();
+        } else {
+            headImgs = wxWorksAuthorRepository.findAuthors(wxIds).stream().collect(Collectors.toMap(WxWorksAuthor::getOpenId, WxWorksAuthor::getHeadImgUrl));
+        }
+        return headImgs;
     }
 
     @Override

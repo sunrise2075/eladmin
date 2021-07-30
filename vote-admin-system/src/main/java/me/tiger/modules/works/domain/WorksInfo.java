@@ -49,6 +49,10 @@ public class WorksInfo implements Serializable {
     @ApiModelProperty(value = "自增主键")
     private Integer id;
 
+    @Column(name = "wx_open_id")
+    @ApiModelProperty(value = "微信openId")
+    private String wxOpenId;
+
     @Column(name = "author_name")
     @ApiModelProperty(value = "作者姓名")
     private String authorName;

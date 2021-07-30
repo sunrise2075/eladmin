@@ -93,6 +93,7 @@ public class WorksInfoController {
     @ApiOperation("查询作品信息")
 //    @PreAuthorize("@el.check('worksInfo:list')")
     public ResponseEntity<Object> query(WorksInfoQueryCriteria criteria, Pageable pageable) {
+
         Map<String, Object> worksInfo = worksInfoService.findWorksInfo(criteria, pageable);
 
         return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
@@ -110,14 +111,14 @@ public class WorksInfoController {
     @ApiOperation("创建文章类参赛作品")
 //    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/article")
-    public ResponseEntity<JSONObject> createParagraph(@RequestParam("userName") String userName,
+    public ResponseEntity<JSONObject> createParagraph(@RequestHeader("openId") String openId, @RequestParam("userName") String userName,
                                                       @RequestParam("phone") String phone,
                                                       @RequestParam("description") String description,
                                                       @RequestParam("article") String article) {
 
         try {
             WorksInfo worksInfo = WorksInfo.builder()
-                    .type(Type.ARTICLE.getCode())
+                    .type(Type.ARTICLE.getCode()).wxOpenId(openId)
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
             worksInfoService.saveArticle(worksInfo, article);
@@ -131,7 +132,7 @@ public class WorksInfoController {
     @ApiOperation("创建图片类参赛作品")
 //    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/images")
-    public ResponseEntity<JSONObject> createImagesWork(@RequestParam("username") String userName,
+    public ResponseEntity<JSONObject> createImagesWork(@RequestHeader("openId") String openId, @RequestParam("username") String userName,
                                                        @RequestParam("phone") String phone,
                                                        @RequestParam("description") String description,
                                                        @RequestParam("images") MultipartFile[] images) {
@@ -142,7 +143,7 @@ public class WorksInfoController {
 
         try {
             WorksInfo worksInfo = WorksInfo.builder()
-                    .type(Type.IMAGES.getCode())
+                    .type(Type.IMAGES.getCode()).wxOpenId(openId)
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
 
@@ -172,10 +173,9 @@ public class WorksInfoController {
     @Log("创建视频类参赛作品")
     @ApiOperation("为作品上传视频")
 //    @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<JSONObject> createVideoWorks(@RequestParam("username") String userName,
-                                                       @RequestParam("phone") String phone,
-                                                       @RequestParam("description") String description,
-                                                       @RequestParam("video") MultipartFile video) {
+    public ResponseEntity<JSONObject> createVideoWorks(@RequestHeader("openId") String openId, @RequestParam("username") String userName,
+                                                        @RequestParam("phone") String phone, @RequestParam("description") String description,
+                                                        @RequestParam("video") MultipartFile video) {
 
         if (video.isEmpty()) {
             JSONObject jsonObject = ResponseConstant.buildResult(0, "文件为空,请选择你的文件上传", null);
@@ -185,7 +185,7 @@ public class WorksInfoController {
         String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), video.getOriginalFilename());
         try {
             WorksInfo worksInfo = WorksInfo.builder()
-                    .type(Type.VIDEO.getCode())
+                    .type(Type.VIDEO.getCode()).wxOpenId(openId)
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
             Path path = FILE_ROOT.resolve(relativeFilePath);

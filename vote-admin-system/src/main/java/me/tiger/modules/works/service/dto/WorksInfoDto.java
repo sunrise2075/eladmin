@@ -44,6 +44,11 @@ public class WorksInfoDto implements Serializable {
     /** 作品描述 */
     private String selfDescription;
 
+    /**
+     * 头像url
+     * */
+    private String headImgUrl;
+
 
     /**
      * 是否获奖: 0 -  没有获奖    1 -  已经获奖
