@@ -77,7 +77,13 @@ public class WorksInfoController {
 //    @PreAuthorize("@el.check('worksInfo:add')")
     public ResponseEntity<Object> voteWorksInfo(@RequestBody VoteDto voteDto) {
 
-        worksInfoService.voteWorksInfo(voteDto);
+        try {
+            worksInfoService.voteWorksInfo(voteDto);
+        } catch (IllegalAccessException e) {
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.OK);
+        }
 
         return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "投票成功", null), HttpStatus.OK);
     }

@@ -16,6 +16,7 @@
 package me.tiger.modules.works.service.impl;
 
 import io.jsonwebtoken.lang.Collections;
+import io.swagger.models.auth.In;
 import lombok.RequiredArgsConstructor;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksArticle;
@@ -36,6 +37,7 @@ import me.tiger.utils.PageUtil;
 import me.tiger.utils.QueryHelp;
 import me.tiger.utils.ValidationUtil;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +46,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,6 +66,9 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     private final WorksArticleRepository worksArticleRepository;
     private final WorksFilesRepository worksFilesRepository;
     private final WorksVoteRecordRepository worksVoteRecordRepository;
+
+    @Value("${vote.limit:10}")
+    private Integer voteLimit;
 
     @Override
     public Map<String, Object> queryAll(WorksInfoQueryCriteria criteria, Pageable pageable) {
@@ -181,9 +188,13 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
     @Override
     @Transactional
-    public void voteWorksInfo(VoteDto voteDto) {
+    public void voteWorksInfo(VoteDto voteDto) throws IllegalAccessException {
         Optional<WorksInfo> optionalWorksInfo = worksInfoRepository.findById(voteDto.getWorksId());
         if (optionalWorksInfo.isPresent()) {
+
+            //检查本用户当天投票次数是否超过要求
+            checkVoteCount(voteDto);
+
             //保存投票记录
             WorksVoteRecord worksVoteRecord = WorksVoteRecord.builder().worksId(voteDto.getWorksId()).count(voteDto.getCount()).voterUserName(voteDto.getVoterUserName()).build();
             worksVoteRecordRepository.save(worksVoteRecord);
@@ -194,6 +205,16 @@ public class WorksInfoServiceImpl implements WorksInfoService {
             voteCount = voteCount + voteDto.getCount();
             worksInfo.setVoteCount(voteCount);
             worksInfoRepository.save(worksInfo);
+        }
+    }
+
+    private void checkVoteCount(VoteDto voteDto) throws IllegalAccessException {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 0, 0, 0, 0);
+        LocalDateTime end = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 23, 59, 59, 999999999);
+        Integer count = worksVoteRecordRepository.countVote(voteDto.getVoterUserName(), Timestamp.valueOf(start), Timestamp.valueOf(end));
+        if (count > voteLimit) {
+            throw new IllegalAccessException(String.format("每天投票不能超过%s票", voteLimit));
         }
     }
 }

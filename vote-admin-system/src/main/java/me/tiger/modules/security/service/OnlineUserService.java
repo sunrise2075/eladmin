@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.bean.result.WxMpUser;
 import me.tiger.modules.security.security.TokenProvider;
 import me.tiger.modules.security.security.WxAuthenticationToken;
+import me.tiger.modules.works.domain.WxWorksAuthor;
+import me.tiger.modules.works.repository.WxWorksAuthorRepository;
 import me.tiger.utils.*;
 import me.tiger.modules.security.config.bean.SecurityProperties;
 import me.tiger.modules.security.service.dto.JwtUserDto;
@@ -43,11 +45,13 @@ public class OnlineUserService {
     private final SecurityProperties properties;
     private final RedisUtils redisUtils;
     private final TokenProvider tokenProvider;
+    private final WxWorksAuthorRepository wxWorksAuthorRepository;
 
-    public OnlineUserService(SecurityProperties properties, RedisUtils redisUtils, TokenProvider tokenProvider) {
+    public OnlineUserService(SecurityProperties properties, RedisUtils redisUtils, TokenProvider tokenProvider, WxWorksAuthorRepository wxWorksAuthorRepository) {
         this.properties = properties;
         this.redisUtils = redisUtils;
         this.tokenProvider = tokenProvider;
+        this.wxWorksAuthorRepository = wxWorksAuthorRepository;
     }
 
     /**
@@ -208,7 +212,12 @@ public class OnlineUserService {
         String browser = StringUtils.getBrowser(request);
         String address = StringUtils.getCityInfo(ip);
         OnlineUserDto onlineUserDto = null;
+
         try {
+            WxWorksAuthor wxWorksAuthor = WxWorksAuthor.builder().openId(wxMpUser.getOpenId()).headImgUrl(wxMpUser.getHeadImgUrl()).nickName(wxMpUser.getNickname())
+                                            .sex(wxMpUser.getSexDesc()).city(wxMpUser.getCity()).province(wxMpUser.getProvince()).country(wxMpUser.getCountry()).build();
+            wxWorksAuthorRepository.save(wxWorksAuthor);
+
             onlineUserDto = new OnlineUserDto(wxMpUser.getOpenId(), wxMpUser.getNickname(), "wxVisitor", browser , ip, address, EncryptUtils.desEncrypt(token), new Date());
         } catch (Exception e) {
             log.error(e.getMessage(),e);

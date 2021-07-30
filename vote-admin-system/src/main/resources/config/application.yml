@@ -49,6 +49,8 @@ wx:
   appID: wx7b90fc6badc4e29c
   appsecret: f4ef435844da10337d94c848caa6c73c
 
+vote:
+  limit: 10
 
 
 #七牛云

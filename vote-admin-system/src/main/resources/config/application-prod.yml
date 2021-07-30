@@ -127,3 +127,6 @@ file:
 
 server:
   domain: vote.weinui.com
+
+vote:
+  limit: 10

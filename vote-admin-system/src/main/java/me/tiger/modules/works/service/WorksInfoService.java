@@ -100,5 +100,5 @@ public interface WorksInfoService {
 
     Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable);
 
-    void voteWorksInfo(VoteDto voteDto);
+    void voteWorksInfo(VoteDto voteDto) throws IllegalAccessException;
 }

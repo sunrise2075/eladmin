@@ -40,6 +40,22 @@ create table works_article
 )
     comment '文字类作品的内容';
 
+
+drop table if exists wx_works_author;
+create table wx_works_author
+(
+    open_id varchar(60) not null comment '微信openId',
+    nick_name varchar(50) null comment '昵称',
+    head_img_url varchar(200) null comment '头像图片地址',
+    sex char(5) null comment '性别',
+    city varchar(50) null comment '城市',
+    province varchar(50) null comment '省份',
+    country varchar(50) null comment '国家',
+    constraint wx_works_author_pk
+        primary key (open_id)
+)
+    comment '作品参赛者的微信用户信息';
+
 # 给管理员新增菜单以及权限
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (118, 1, 3, 1, '作品管理', 'WorksInfo', 'system/works/index', 999, 'Steve-Jobs', 'works', false, false, false, 'worksInfo:list', 'admin', 'admin', '2021-07-24 10:36:35', '2021-07-24 11:31:21');
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (119, 118, 0, 2, '作品新增', null, '', 2, 'doc', 'works', false, false, false, 'worksInfo:add', 'admin', 'admin', '2021-07-24 11:09:52', '2021-07-24 11:38:49');

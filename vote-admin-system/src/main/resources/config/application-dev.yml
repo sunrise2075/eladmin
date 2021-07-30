@@ -119,3 +119,6 @@ file:
 
 server:
   domain: 5847f71879aa.ngrok.io
+
+vote:
+  limit: 10
