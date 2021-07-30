@@ -98,7 +98,18 @@ public interface WorksInfoService {
      * */
     void saveWorksInfoWithFiles(WorksInfo worksInfo, List<String> pathList);
 
+    /**
+     * 根据查询条件分页获取作品信息
+     * @param criteria
+     * @param pageable
+     *
+     * */
     Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable);
 
     void voteWorksInfo(VoteDto voteDto) throws IllegalAccessException;
+
+    /**
+     * 查询获奖作品的列表，按照投票数量倒序排序
+     * */
+    Map<String, Object> findWorksInfoWithWinFlag(Pageable pageable);
 }

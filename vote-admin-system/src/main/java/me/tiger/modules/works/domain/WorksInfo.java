@@ -69,6 +69,10 @@ public class WorksInfo implements Serializable {
     @ApiModelProperty(value = "是否获奖: 0 -  没有获奖    1 -  已经获奖")
     private Integer winFlag;
 
+    @Column(name = "star_index")
+    @ApiModelProperty(value = "是否最佳 ： 默认值 0 表示该作品不是最佳作品, 数字越大代表当前作品越佳")
+    private Integer starIndex;
+
     @Column(name = "vote_count")
     @ApiModelProperty(value = "得票总数")
     private Integer voteCount;

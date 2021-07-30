@@ -157,35 +157,13 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
         Page<WorksInfo> worksInfoList = worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType(), pageable);
 
-        List<String> wxIds = worksInfoList.stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(worksInfoList.getContent())) {
 
-        Map<String, String> headImgs = getHeadImgUrlMapping(wxIds);
+            return transformWorksInfoDto(pageable, worksInfoList);
+        } else {
 
-        List<WorksInfoDto> worksInfoDtos = worksInfoList.getContent().stream().map(worksInfo -> {
-
-            WorksInfoDto dto = new WorksInfoDto();
-            BeanUtils.copyProperties(worksInfo, dto);
-            dto.setHeadImgUrl(headImgs.getOrDefault(worksInfo.getWxOpenId(), ""));
-
-            //文字类
-            if (worksInfo.getType() == 0) {
-                List<WorksArticle> worksArticleList = worksArticleRepository.findAll(Example.of(WorksArticle.builder().worksId(worksInfo.getId()).build()));
-                if (!Collections.isEmpty(worksArticleList)) {
-                    dto.setArticleContent(worksArticleList.get(0).getArticleContent());
-                }
-            } else {
-                //图片或者视频类
-                List<WorksFiles> worksFilesList = worksFilesRepository.findAll(Example.of(WorksFiles.builder().worksId(worksInfo.getId()).build()));
-                List<String> filePathList = worksFilesList.stream().map(WorksFiles::getRelativeFilePath).collect(Collectors.toList());
-                dto.setFiles(filePathList);
-            }
-
-            return dto;
-        }).collect(Collectors.toList());
-
-        Long totalElements = worksInfoList.getTotalElements();
-
-        return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
+            return PageUtil.toPage(0, 0, 0, java.util.Collections.emptyList());
+        }
     }
 
     private Map<String, String> getHeadImgUrlMapping(List<String> wxIds) {
@@ -218,6 +196,53 @@ public class WorksInfoServiceImpl implements WorksInfoService {
             worksInfo.setVoteCount(voteCount);
             worksInfoRepository.save(worksInfo);
         }
+    }
+
+    @Override
+    public Map<String, Object> findWorksInfoWithWinFlag(Pageable pageable) {
+
+        Page<WorksInfo> worksInfos = worksInfoRepository.findWorksInfoWithWinFlag(pageable);
+
+        if (!CollectionUtils.isEmpty(worksInfos.getContent())) {
+
+            return transformWorksInfoDto(pageable, worksInfos);
+
+        } else {
+            return PageUtil.toPage(0, 0, 0, java.util.Collections.emptyList());
+        }
+    }
+
+    private Map<String, Object> transformWorksInfoDto(Pageable pageable, Page<WorksInfo> worksInfos) {
+
+        List<String> wxIds = worksInfos.stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
+
+        Map<String, String> headImgs = getHeadImgUrlMapping(wxIds);
+
+        List<WorksInfoDto> worksInfoDtos = worksInfos.getContent().stream().map(worksInfo -> {
+
+            WorksInfoDto dto = new WorksInfoDto();
+            BeanUtils.copyProperties(worksInfo, dto);
+            dto.setHeadImgUrl(headImgs.getOrDefault(worksInfo.getWxOpenId(), ""));
+
+            //文字类
+            if (worksInfo.getType() == 0) {
+                List<WorksArticle> worksArticleList = worksArticleRepository.findAll(Example.of(WorksArticle.builder().worksId(worksInfo.getId()).build()));
+                if (!Collections.isEmpty(worksArticleList)) {
+                    dto.setArticleContent(worksArticleList.get(0).getArticleContent());
+                }
+            } else {
+                //图片或者视频类
+                List<WorksFiles> worksFilesList = worksFilesRepository.findAll(Example.of(WorksFiles.builder().worksId(worksInfo.getId()).build()));
+                List<String> filePathList = worksFilesList.stream().map(WorksFiles::getRelativeFilePath).collect(Collectors.toList());
+                dto.setFiles(filePathList);
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
+
+        Long totalElements = worksInfos.getTotalElements();
+
+        return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
     }
 
     private void checkVoteCount(VoteDto voteDto) throws IllegalAccessException {

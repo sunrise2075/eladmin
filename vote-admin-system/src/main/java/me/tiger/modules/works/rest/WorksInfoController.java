@@ -99,6 +99,17 @@ public class WorksInfoController {
         return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
     }
 
+    @GetMapping(value = "/winList")
+    @Log("查询作品信息")
+    @ApiOperation("查询作品信息")
+//    @PreAuthorize("@el.check('worksInfo:list')")
+    public ResponseEntity<Object> findWorksInfoWithWinFlag(Pageable pageable) {
+
+        Map<String, Object> worksInfo = worksInfoService.findWorksInfoWithWinFlag(pageable);
+
+        return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
+    }
+
     @PostMapping
     @Log("新增作品信息")
     @ApiOperation("新增作品信息")

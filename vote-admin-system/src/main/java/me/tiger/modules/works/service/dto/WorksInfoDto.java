@@ -56,6 +56,12 @@ public class WorksInfoDto implements Serializable {
      * */
     private Integer winFlag;
 
+    /**
+     *
+     * 是否最佳 ： 默认值 0 表示该作品不是最佳作品, 数字越大代表当前作品越佳
+     *
+     * */
+    private Integer starIndex;
 
     /**
      *  得票总数
