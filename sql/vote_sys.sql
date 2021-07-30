@@ -60,6 +60,18 @@ create table wx_works_author
 )
     comment '作品参赛者的微信用户信息';
 
+drop table if exists works_podcast;
+create table works_podcast
+(
+    id           int auto_increment
+        primary key,
+    url          varchar(250)                        null comment '直播链接地址',
+    image_path   varchar(200)                        null comment '海报相对路径',
+    begin_time   datetime                            null comment '直播开始时间',
+    created_time timestamp default CURRENT_TIMESTAMP null
+)
+    comment '直播列表';
+
 # 给管理员新增菜单以及权限
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (118, 1, 3, 1, '作品管理', 'WorksInfo', 'system/works/index', 999, 'Steve-Jobs', 'works', false, false, false, 'worksInfo:list', 'admin', 'admin', '2021-07-24 10:36:35', '2021-07-24 11:31:21');
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (119, 118, 0, 2, '作品新增', null, '', 2, 'doc', 'works', false, false, false, 'worksInfo:add', 'admin', 'admin', '2021-07-24 11:09:52', '2021-07-24 11:38:49');
