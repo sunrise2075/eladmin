@@ -18,6 +18,9 @@ package me.tiger.modules.works.repository;
 import me.tiger.modules.works.domain.WorksPodcast;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+
+import java.util.List;
 
 /**
 * @website https://el-admin.vip
@@ -25,4 +28,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 * @date 2021-07-31
 **/
 public interface WorksPodcastRepository extends JpaRepository<WorksPodcast, Integer>, JpaSpecificationExecutor<WorksPodcast> {
+
+    @Query(nativeQuery = true, value = "select * from works_podcast order by created_time desc")
+    List<WorksPodcast> findAllPodcast();
 }

@@ -26,6 +26,7 @@ import me.tiger.modules.works.constant.ResourceConstant;
 import me.tiger.modules.works.constant.ResponseConstant;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.WorksInfo;
+import me.tiger.modules.works.rest.dto.WorksInfoReqDto;
 import me.tiger.modules.works.service.WorksInfoService;
 import me.tiger.modules.works.service.dto.VoteDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
@@ -124,17 +125,15 @@ public class WorksInfoController {
     @ApiOperation("创建文章类参赛作品")
 //    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/article")
-    public ResponseEntity<JSONObject> createParagraph(@RequestHeader("openId") String openId, @RequestParam("userName") String userName,
-                                                      @RequestParam("phone") String phone,
-                                                      @RequestParam("description") String description,
-                                                      @RequestParam("article") String article) {
+    public ResponseEntity<JSONObject> createParagraph(@RequestHeader("openId") String openId,
+                                                      @RequestBody WorksInfoReqDto dto) {
 
         try {
             WorksInfo worksInfo = WorksInfo.builder()
                     .type(Type.ARTICLE.getCode()).wxOpenId(openId)
-                    .authorName(userName).authorMobile(phone)
-                    .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
-            worksInfoService.saveArticle(worksInfo, article);
+                    .authorName(dto.getUserName()).authorMobile(dto.getPhone())
+                    .selfDescription(dto.getDescription()).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
+            worksInfoService.saveArticle(worksInfo, dto.getArticle());
             return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.CREATED);
@@ -145,7 +144,8 @@ public class WorksInfoController {
     @ApiOperation("创建图片类参赛作品")
 //    @PreAuthorize("@el.check('worksInfo:add')")
     @PostMapping("/images")
-    public ResponseEntity<JSONObject> createImagesWork(@RequestHeader("openId") String openId, @RequestParam("username") String userName,
+    public ResponseEntity<JSONObject> createImagesWork(@RequestHeader("openId") String openId,
+                                                       @RequestParam("userName") String userName,
                                                        @RequestParam("phone") String phone,
                                                        @RequestParam("description") String description,
                                                        @RequestParam("images") MultipartFile[] images) {
@@ -186,8 +186,9 @@ public class WorksInfoController {
     @Log("创建视频类参赛作品")
     @ApiOperation("为作品上传视频")
 //    @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<JSONObject> createVideoWorks(@RequestHeader("openId") String openId, @RequestParam("username") String userName,
-                                                       @RequestParam("phone") String phone, @RequestParam("description") String description,
+    public ResponseEntity<JSONObject> createVideoWorks(@RequestHeader("openId") String openId, @RequestParam("userName") String userName,
+                                                       @RequestParam("phone") String phone,
+                                                       @RequestParam("description") String description,
                                                        @RequestParam("video") MultipartFile video) {
 
         if (video.isEmpty()) {

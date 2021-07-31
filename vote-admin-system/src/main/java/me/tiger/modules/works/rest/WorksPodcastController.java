@@ -15,9 +15,12 @@
 */
 package me.tiger.modules.works.rest;
 
+import com.alibaba.fastjson.JSONObject;
 import me.tiger.annotation.Log;
+import me.tiger.modules.works.constant.ResponseConstant;
 import me.tiger.modules.works.domain.WorksPodcast;
 import me.tiger.modules.works.service.WorksPodcastService;
+import me.tiger.modules.works.service.dto.WorksPodcastDto;
 import me.tiger.modules.works.service.dto.WorksPodcastQueryCriteria;
 import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.annotations.*;
 import java.io.IOException;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -54,9 +58,12 @@ public class WorksPodcastController {
     @GetMapping
     @Log("查询作品有关直播")
     @ApiOperation("查询作品有关直播")
-    @PreAuthorize("@el.check('worksPodcast:list')")
-    public ResponseEntity<Object> query(WorksPodcastQueryCriteria criteria, Pageable pageable){
-        return new ResponseEntity<>(worksPodcastService.queryAll(criteria,pageable),HttpStatus.OK);
+//    @PreAuthorize("@el.check('worksPodcast:list')")
+    public ResponseEntity<JSONObject> query(){
+
+        List<WorksPodcastDto> worksPodcastDtos = worksPodcastService.queryAll();
+
+        return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "查询成功", worksPodcastDtos), HttpStatus.OK);
     }
 
     @PostMapping

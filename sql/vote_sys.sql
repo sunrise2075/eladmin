@@ -1,6 +1,7 @@
 -- 删除免费图床表
 # DROP TABLE tool_picture;
 
+# truncate works_info;
 drop table if exists works_info;
 create table works_info
 (
@@ -24,7 +25,7 @@ create table works_info
 
 
 
-
+# truncate works_files;
 drop table if exists works_files;
 create table works_files
 (
@@ -35,6 +36,7 @@ create table works_files
 ) comment '作品和图片文件的对应关系';
 # alter table works_files modify relative_file_path varchar(500) null comment '文件相对路径';
 
+# truncate works_article;
 drop table if exists works_article;
 create table works_article
 (
@@ -45,7 +47,7 @@ create table works_article
 )
     comment '文字类作品的内容';
 
-
+truncate wx_works_author;
 drop table if exists wx_works_author;
 create table wx_works_author
 (
@@ -61,6 +63,7 @@ create table wx_works_author
 )
     comment '作品参赛者的微信用户信息';
 
+truncate works_vote_record;
 drop table if exists works_vote_record;
 create table works_vote_record
 (
@@ -74,6 +77,7 @@ create table works_vote_record
     comment '投票记录表';
 
 
+truncate works_podcast;
 drop table if exists works_podcast;
 create table works_podcast
 (
