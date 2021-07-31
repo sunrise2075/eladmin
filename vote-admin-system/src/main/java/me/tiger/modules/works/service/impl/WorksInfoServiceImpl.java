@@ -255,6 +255,10 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 0, 0, 0, 0);
         LocalDateTime end = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 23, 59, 59, 999999999);
         Integer count = worksVoteRecordRepository.countVote(wxOpenId, Timestamp.valueOf(start), Timestamp.valueOf(end));
+
+        if (count == null) {
+            count = 0;
+        }
         log.info("当前用户今天已经投票的数量是:{}", count);
         if (count > voteLimit) {
             throw new IllegalAccessException(String.format("每天投票不能超过%s票", voteLimit));
