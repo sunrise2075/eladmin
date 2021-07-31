@@ -76,7 +76,14 @@ Uninstall Redis and its files.
 
     mvn install -Pprepare
 
-# 建表
+# `MySQL`数据库保存微信昵称支持特殊表情富豪
+
+    #修改数据库字符集：
+    ALTER DATABASE database_name CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+    #修改表的字符集：
+    ALTER TABLE table_name CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    #修改字段的字符集：
+    ALTER TABLE table_name CHANGE column_name column_name VARCHAR(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
 

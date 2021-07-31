@@ -1,3 +1,0 @@
-Caused by: java.sql.SQLSyntaxErrorException: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '*)
-
-from works_info w  where if(1=null,w.win_flag=1, 1=1)' at line 1

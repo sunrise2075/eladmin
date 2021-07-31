@@ -168,12 +168,12 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         }
     }
 
-    private Map<String, String> getHeadImgUrlMapping(List<String> wxIds) {
-        Map<String, String> headImgs;
+    private Map<String, WxWorksAuthor> getHeadImgUrlMapping(List<String> wxIds) {
+        Map<String, WxWorksAuthor> headImgs;
         if (CollectionUtils.isEmpty(wxIds)) {
             headImgs = java.util.Collections.emptyMap();
         } else {
-            headImgs = wxWorksAuthorRepository.findAuthors(wxIds).stream().collect(Collectors.toMap(WxWorksAuthor::getOpenId, WxWorksAuthor::getHeadImgUrl));
+            headImgs = wxWorksAuthorRepository.findAuthors(wxIds).stream().collect(Collectors.toMap(WxWorksAuthor::getOpenId, wxWorksAuthor -> wxWorksAuthor));
         }
         return headImgs;
     }
@@ -221,13 +221,17 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
         List<String> wxIds = worksInfos.stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
 
-        Map<String, String> headImgs = getHeadImgUrlMapping(wxIds);
+        Map<String, WxWorksAuthor> wxWorksAuthorMap = getHeadImgUrlMapping(wxIds);
 
         List<WorksInfoDto> worksInfoDtos = worksInfos.getContent().stream().map(worksInfo -> {
 
             WorksInfoDto dto = new WorksInfoDto();
             BeanUtils.copyProperties(worksInfo, dto);
-            dto.setHeadImgUrl(headImgs.getOrDefault(worksInfo.getWxOpenId(), ""));
+            if (wxWorksAuthorMap.containsKey(worksInfo.getWxOpenId())) {
+                WxWorksAuthor wxWorksAuthor = wxWorksAuthorMap.get(worksInfo.getWxOpenId());
+                dto.setAuthorName(wxWorksAuthor.getNickName());
+                dto.setHeadImgUrl(wxWorksAuthor.getHeadImgUrl());
+            }
 
             //文字类
             if (worksInfo.getType() == 0) {
