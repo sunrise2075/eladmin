@@ -31,8 +31,9 @@ create table works_files
     id                 int auto_increment
         primary key,
     works_id           int          null comment '作品ID',
-    relative_file_path varchar(100) null comment '文件相对路径'
+    relative_file_path varchar(500) null comment '文件相对路径'
 ) comment '作品和图片文件的对应关系';
+# alter table works_files modify relative_file_path varchar(500) null comment '文件相对路径';
 
 drop table if exists works_article;
 create table works_article
