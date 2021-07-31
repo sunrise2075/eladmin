@@ -11,14 +11,14 @@ create table works_info
     author_name      varchar(100)                        null comment '作者姓名',
     author_mobile    varchar(50)                         null comment '作者手机号',
     self_description varchar(200)                        null comment '作品描述',
-    star_index       int       default 0                 null comment '是否最佳 ： 默认值 0 表示该作品不是最佳作品, 数字越大代表当前作品越佳',
     win_flag         tinyint   default 0                 null comment '0 -  没有获奖    1 -  已经获奖',
     vote_count       int       default 0                 null comment '得票总数',
     life_status      tinyint                             null comment '作品状态：1. 提交  2. 审核中  3. 审核通过  4. 审核拒绝 5. 获奖',
     updated_date     timestamp default null null,
     created_by       varchar(50)                         null comment '创建人',
     updated_by       varchar(50)                         null comment '更新人',
-    created_date     timestamp default CURRENT_TIMESTAMP null
+    created_date     timestamp default CURRENT_TIMESTAMP null,
+    star_index       int       default 0                 null comment '是否最佳 ： 默认值 0 表示该作品不是最佳作品, 数字越大代表当前作品越佳'
 )
     comment '作品信息';
 
@@ -61,6 +61,19 @@ create table wx_works_author
 )
     comment '作品参赛者的微信用户信息';
 
+drop table if exists works_vote_record;
+create table works_vote_record
+(
+    id              int auto_increment
+        primary key,
+    works_id        int                                 not null comment '作品id',
+    count           int                                 null comment '投票票数',
+    voter_user_name varchar(100)                        null comment '投票人用户名',
+    created_time    timestamp default CURRENT_TIMESTAMP null comment '投票时间'
+)
+    comment '投票记录表';
+
+
 drop table if exists works_podcast;
 create table works_podcast
 (
@@ -78,6 +91,11 @@ INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, compon
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (119, 118, 0, 2, '作品新增', null, '', 2, 'doc', 'works', false, false, false, 'worksInfo:add', 'admin', 'admin', '2021-07-24 11:09:52', '2021-07-24 11:38:49');
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (120, 118, 0, 2, '作品编辑', null, '', 3, null, 'works', false, false, false, 'worksInfo:edit', 'admin', 'admin', '2021-07-24 11:12:39', '2021-07-24 11:38:59');
 INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (121, 118, 0, 2, '作品删除', null, null, 4, null, 'works', false, false, false, 'worksInfo:edit', 'admin', 'admin', '2021-07-24 11:14:43', '2021-07-24 11:42:10');
+
+INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (122, 1, 3, 1, '直播管理', 'worksPodcast', 'system/worksPodcast/index', 999, 'education', 'worksPodcast', false, false, false, 'worksPodcast:list', 'admin', 'admin', '2021-07-31 08:35:45', '2021-07-31 08:35:45');
+INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (123, 122, 0, 2, '新增直播', null, null, 999, 'doc', 'worksPodcast', false, false, false, 'worksPodcast:add', 'admin', 'admin', '2021-07-31 08:41:12', '2021-07-31 08:48:58');
+INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (124, 122, 0, 2, '编辑直播', null, null, 999, 'edit', 'worksPodcast', false, false, false, 'worksPodcast:edit', 'admin', 'admin', '2021-07-31 08:43:28', '2021-07-31 08:46:52');
+INSERT INTO vote_db.sys_menu (menu_id, pid, sub_count, type, title, name, component, menu_sort, icon, path, i_frame, cache, hidden, permission, create_by, update_by, create_time, update_time) VALUES (125, 122, 0, 2, '删除直播', null, null, 999, 'database', 'worksPodcast', false, false, false, 'worksPodcast:del', 'admin', 'admin', '2021-07-31 08:46:00', '2021-07-31 08:46:22');
 
 INSERT INTO vote_db.sys_roles_menus (menu_id, role_id) VALUES (118, 1);
 INSERT INTO vote_db.sys_roles_menus (menu_id, role_id) VALUES (119, 1);

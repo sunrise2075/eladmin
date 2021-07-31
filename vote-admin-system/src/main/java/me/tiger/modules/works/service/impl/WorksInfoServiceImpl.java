@@ -17,14 +17,15 @@ package me.tiger.modules.works.service.impl;
 
 import io.jsonwebtoken.lang.Collections;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.tiger.modules.works.constant.Type;
 import me.tiger.modules.works.domain.*;
 import me.tiger.modules.works.repository.*;
 import me.tiger.modules.works.service.WorksInfoService;
-import me.tiger.modules.works.service.WorksPodcastService;
-import me.tiger.modules.works.service.dto.*;
+import me.tiger.modules.works.service.dto.VoteDto;
+import me.tiger.modules.works.service.dto.WorksInfoDto;
+import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import me.tiger.modules.works.service.mapstruct.WorksInfoMapper;
-import me.tiger.modules.works.service.mapstruct.WorksPodcastMapper;
 import me.tiger.utils.FileUtil;
 import me.tiger.utils.PageUtil;
 import me.tiger.utils.QueryHelp;
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
  * @description 服务实现
  * @date 2021-07-24
  **/
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorksInfoServiceImpl implements WorksInfoService {
@@ -178,20 +180,23 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
     @Override
     @Transactional
-    public void voteWorksInfo(VoteDto voteDto) throws IllegalAccessException {
+    public void voteWorksInfo(VoteDto voteDto, String wxOpenId) throws IllegalAccessException {
         Optional<WorksInfo> optionalWorksInfo = worksInfoRepository.findById(voteDto.getWorksId());
         if (optionalWorksInfo.isPresent()) {
 
             //检查本用户当天投票次数是否超过要求
-            checkVoteCount(voteDto);
+            checkVoteCount(wxOpenId);
 
             //保存投票记录
-            WorksVoteRecord worksVoteRecord = WorksVoteRecord.builder().worksId(voteDto.getWorksId()).count(voteDto.getCount()).voterUserName(voteDto.getVoterUserName()).build();
+            WorksVoteRecord worksVoteRecord = WorksVoteRecord.builder().worksId(voteDto.getWorksId()).count(voteDto.getCount()).voterUserName(wxOpenId).createdTime(new Timestamp(new Date().getTime())).build();
             worksVoteRecordRepository.save(worksVoteRecord);
 
             WorksInfo worksInfo = optionalWorksInfo.get();
             //更新总票数
             Integer voteCount = worksInfo.getVoteCount();
+            if (voteCount == null) {
+                voteCount = 0;
+            }
             voteCount = voteCount + voteDto.getCount();
             worksInfo.setVoteCount(voteCount);
             worksInfoRepository.save(worksInfo);
@@ -245,82 +250,14 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
     }
 
-    private void checkVoteCount(VoteDto voteDto) throws IllegalAccessException {
+    private void checkVoteCount(String wxOpenId) throws IllegalAccessException {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 0, 0, 0, 0);
         LocalDateTime end = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 23, 59, 59, 999999999);
-        Integer count = worksVoteRecordRepository.countVote(voteDto.getVoterUserName(), Timestamp.valueOf(start), Timestamp.valueOf(end));
+        Integer count = worksVoteRecordRepository.countVote(wxOpenId, Timestamp.valueOf(start), Timestamp.valueOf(end));
+        log.info("当前用户今天已经投票的数量是:{}", count);
         if (count > voteLimit) {
             throw new IllegalAccessException(String.format("每天投票不能超过%s票", voteLimit));
-        }
-    }
-
-    /**
-    * @website https://el-admin.vip
-    * @description 服务实现
-    * @author tiger
-    * @date 2021-07-31
-    **/
-    @Service
-    @RequiredArgsConstructor
-    public static class WorksPodcastServiceImpl implements WorksPodcastService {
-
-        private final WorksPodcastRepository worksPodcastRepository;
-        private final WorksPodcastMapper worksPodcastMapper;
-
-        @Override
-        public Map<String,Object> queryAll(WorksPodcastQueryCriteria criteria, Pageable pageable){
-            Page<WorksPodcast> page = worksPodcastRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root,criteria,criteriaBuilder),pageable);
-            return PageUtil.toPage(page.map(worksPodcastMapper::toDto));
-        }
-
-        @Override
-        public List<WorksPodcastDto> queryAll(WorksPodcastQueryCriteria criteria){
-            return worksPodcastMapper.toDto(worksPodcastRepository.findAll((root, criteriaQuery, criteriaBuilder) -> QueryHelp.getPredicate(root,criteria,criteriaBuilder)));
-        }
-
-        @Override
-        @Transactional
-        public WorksPodcastDto findById(Integer id) {
-            WorksPodcast worksPodcast = worksPodcastRepository.findById(id).orElseGet(WorksPodcast::new);
-            ValidationUtil.isNull(worksPodcast.getId(),"WorksPodcast","id",id);
-            return worksPodcastMapper.toDto(worksPodcast);
-        }
-
-        @Override
-        @Transactional(rollbackFor = Exception.class)
-        public WorksPodcastDto create(WorksPodcast resources) {
-            return worksPodcastMapper.toDto(worksPodcastRepository.save(resources));
-        }
-
-        @Override
-        @Transactional(rollbackFor = Exception.class)
-        public void update(WorksPodcast resources) {
-            WorksPodcast worksPodcast = worksPodcastRepository.findById(resources.getId()).orElseGet(WorksPodcast::new);
-            ValidationUtil.isNull( worksPodcast.getId(),"WorksPodcast","id",resources.getId());
-            worksPodcast.copy(resources);
-            worksPodcastRepository.save(worksPodcast);
-        }
-
-        @Override
-        public void deleteAll(Integer[] ids) {
-            for (Integer id : ids) {
-                worksPodcastRepository.deleteById(id);
-            }
-        }
-
-        @Override
-        public void download(List<WorksPodcastDto> all, HttpServletResponse response) throws IOException {
-            List<Map<String, Object>> list = new ArrayList<>();
-            for (WorksPodcastDto worksPodcast : all) {
-                Map<String,Object> map = new LinkedHashMap<>();
-                map.put("直播链接地址", worksPodcast.getUrl());
-                map.put("海报相对路径", worksPodcast.getImagePath());
-                map.put("直播开始时间", worksPodcast.getBeginTime());
-                map.put("直播创建日期", worksPodcast.getCreatedTime());
-                list.add(map);
-            }
-            FileUtil.downloadExcel(list, response);
         }
     }
 }

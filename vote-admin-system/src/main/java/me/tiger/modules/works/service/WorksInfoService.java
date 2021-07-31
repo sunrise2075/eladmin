@@ -106,7 +106,7 @@ public interface WorksInfoService {
      * */
     Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable);
 
-    void voteWorksInfo(VoteDto voteDto) throws IllegalAccessException;
+    void voteWorksInfo(VoteDto voteDto, String wxOpenId) throws IllegalAccessException;
 
     /**
      * 查询作品的列表，按照投票数量倒序排序

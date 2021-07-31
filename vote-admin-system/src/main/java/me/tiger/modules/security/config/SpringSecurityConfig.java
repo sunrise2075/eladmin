@@ -131,6 +131,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/swagger-resources/**").permitAll()
                 .antMatchers("/webjars/**").permitAll()
                 .antMatchers(ResourceConstant.STATIC_FILE_PATTERN).permitAll()
+                .antMatchers(ResourceConstant.ADMIN_WEB_PATTERN).permitAll()
                 .antMatchers("/*/api-docs").permitAll()
                 // 文件
                 .antMatchers("/avatar/**").permitAll()

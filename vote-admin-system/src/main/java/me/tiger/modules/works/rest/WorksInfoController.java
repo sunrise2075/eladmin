@@ -75,13 +75,15 @@ public class WorksInfoController {
     @Log("投票")
     @ApiOperation("投票")
 //    @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<Object> voteWorksInfo(@RequestBody VoteDto voteDto) {
+    public ResponseEntity<Object> voteWorksInfo(@RequestHeader("openId") String wxOpenId,@RequestBody VoteDto voteDto) {
 
         try {
-            worksInfoService.voteWorksInfo(voteDto);
+            worksInfoService.voteWorksInfo(voteDto, wxOpenId);
         } catch (IllegalAccessException e) {
+            log.error("IllegalAccessException", e);
             return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.OK);
         } catch (Exception e) {
+            log.error("系统异常", e);
             return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.FAIL, e.getMessage(), null), HttpStatus.OK);
         }
 
