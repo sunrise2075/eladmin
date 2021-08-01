@@ -71,28 +71,9 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     public Map<String, Object> queryAll(WorksInfoQueryCriteria criteria, Pageable pageable) {
 
         WorksInfo worksInfo = WorksInfo.builder().authorName(criteria.getAuthorName()).authorMobile(criteria.getAuthorMobile()).type(criteria.getType()).build();
-        Page<WorksInfo> page = worksInfoRepository.findAll(Example.of(worksInfo), pageable);
+        Page<WorksInfo> worksInfoPage = worksInfoRepository.findAll(Example.of(worksInfo), pageable);
 
-        List<String> wxIds = page.getContent().stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(wxIds)) {
-
-            Map<String, WxWorksAuthor> wxWorksAuthorMap = wxWorksAuthorRepository.findAuthors(wxIds).stream().collect(Collectors.toMap(WxWorksAuthor::getOpenId, o -> o));
-
-            page.getContent().forEach(w -> {
-                if (wxWorksAuthorMap.containsKey(w.getWxOpenId())) {
-                    w.setAuthorName(wxWorksAuthorMap.get(w.getWxOpenId()).getNickName());
-                }
-            });
-        }
-
-        //修改后台界面显示的用户名位微信昵称
-        Page<WorksInfoDto> worksInfoDtoPage = page.map(worksInfoMapper::toDto);
-        List<WorksInfoDto> content = worksInfoDtoPage.getContent();
-
-
-
-
-        return PageUtil.toPage(worksInfoDtoPage);
+        return transformWorksInfoDto(pageable,  worksInfoPage);
     }
 
     @Override
