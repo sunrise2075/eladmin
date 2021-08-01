@@ -80,5 +80,23 @@ Uninstall Redis and its files.
 
     ALTER TABLE wx_works_author CONVERT TO CHARACTER SET utf8mb4;
 
+#  `Nginx`代理`Vue 2.6`单页面应用刷新页面404
+
+    listen 80;
+    server_name voteadmin.weinui.com;
+    index index.php index.html index.htm default.php default.htm default.html;
+    root /www/wwwroot/voteadmin.weinui.com;
+
+    ......(打包后的index.html文件位于root目录下，此处省略其他配置)
+
+    location / {
+        try_files $uri $uri/ @router;
+        index index.html;
+    }
+
+    location @router {
+        rewrite ^.*$ /index.html last;
+    }
+
 
 

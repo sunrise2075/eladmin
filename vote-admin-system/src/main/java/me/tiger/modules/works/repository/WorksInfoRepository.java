@@ -22,6 +22,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
+
 /**
  * @author tiger
  * @website https://el-admin.vip
@@ -33,9 +35,11 @@ public interface WorksInfoRepository extends JpaRepository<WorksInfo, Integer>, 
             value = "select w.* from works_info w where " +
                     "if (?1 !=''|null, w.author_name like concat('%', ?1, '%') ,1=1) " +
                     "and if(?2 !=''|null, w.author_mobile like concat('%', ?2, '%'), 2=2)  " +
-                    "and w.type = ?3 order by w.created_date desc")
+                    "and w.type = ?3 and w.life_status = 3 order by w.created_date desc")
     Page<WorksInfo> findWorksInfo(String authorName, String authorMobile, Integer type, Pageable pageable);
 
-    @Query(nativeQuery = true, value = "select w.* from works_info w  where if(?1=null,w.win_flag=?1, 1=1)  order by w.vote_count desc")
-    Page<WorksInfo> findWorksInfo(Integer winFlag, Pageable pageable);
+    @Query(nativeQuery = true, value = "select w.* from works_info w  " +
+            "where if(?1!=null,w.win_flag=?1, 1=1) " +
+            "and w.life_status in (3,5) order by w.vote_count desc")
+    List<WorksInfo> findWorksInfo(Integer winFlag);
 }

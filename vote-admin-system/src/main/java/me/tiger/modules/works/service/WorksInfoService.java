@@ -111,9 +111,10 @@ public interface WorksInfoService {
     /**
      * 查询作品的列表，按照投票数量倒序排序
      *
-     * @param winFlag
+     * 获奖或者人气作品列表
+     *  @param winFlag
      *
      *
-     * */
-    Map<String, Object> findWorksInfo(Integer winFlag, Pageable pageable);
+     * @return*/
+    List<WorksInfoDto> findWorksInfo(Integer winFlag, Pageable pageable);
 }

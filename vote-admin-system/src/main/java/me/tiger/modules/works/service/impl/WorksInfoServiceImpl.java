@@ -204,26 +204,29 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     }
 
     @Override
-    public Map<String, Object> findWorksInfo(Integer winFlag, Pageable pageable) {
+    public List<WorksInfoDto> findWorksInfo(Integer winFlag, Pageable pageable) {
 
-        Page<WorksInfo> worksInfos = worksInfoRepository.findWorksInfo(winFlag, pageable);
+        List<WorksInfo> worksInfos = worksInfoRepository.findWorksInfo(winFlag);
 
-        if (!CollectionUtils.isEmpty(worksInfos.getContent())) {
-
-            return transformWorksInfoDto(pageable, worksInfos);
-
-        } else {
-            return PageUtil.toPage(0, 0, 0, java.util.Collections.emptyList());
-        }
+        return getWorksInfoDtos(worksInfos);
     }
 
     private Map<String, Object> transformWorksInfoDto(Pageable pageable, Page<WorksInfo> worksInfos) {
 
-        List<String> wxIds = worksInfos.stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
+        List<WorksInfoDto> worksInfoDtos = getWorksInfoDtos(worksInfos.getContent());
+
+        Long totalElements = worksInfos.getTotalElements();
+
+        return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
+    }
+
+    private List<WorksInfoDto> getWorksInfoDtos(List<WorksInfo> worksInfosContent) {
+
+        List<String> wxIds = worksInfosContent.stream().map(WorksInfo::getWxOpenId).collect(Collectors.toList());
 
         Map<String, WxWorksAuthor> wxWorksAuthorMap = getHeadImgUrlMapping(wxIds);
 
-        List<WorksInfoDto> worksInfoDtos = worksInfos.getContent().stream().map(worksInfo -> {
+        List<WorksInfoDto> worksInfoDtos = worksInfosContent.stream().map(worksInfo -> {
 
             WorksInfoDto dto = new WorksInfoDto();
             BeanUtils.copyProperties(worksInfo, dto);
@@ -248,10 +251,7 @@ public class WorksInfoServiceImpl implements WorksInfoService {
 
             return dto;
         }).collect(Collectors.toList());
-
-        Long totalElements = worksInfos.getTotalElements();
-
-        return PageUtil.toPage(totalElements.intValue(), pageable.getPageSize(), pageable.getPageNumber(), worksInfoDtos);
+        return worksInfoDtos;
     }
 
     private void checkVoteCount(String wxOpenId) throws IllegalAccessException {

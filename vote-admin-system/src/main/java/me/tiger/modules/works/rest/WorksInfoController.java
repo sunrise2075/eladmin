@@ -29,6 +29,7 @@ import me.tiger.modules.works.domain.WorksInfo;
 import me.tiger.modules.works.rest.dto.WorksInfoReqDto;
 import me.tiger.modules.works.service.WorksInfoService;
 import me.tiger.modules.works.service.dto.VoteDto;
+import me.tiger.modules.works.service.dto.WorksInfoDto;
 import me.tiger.modules.works.service.dto.WorksInfoQueryCriteria;
 import me.tiger.utils.StringUtils;
 import org.springframework.data.domain.Pageable;
@@ -108,12 +109,12 @@ public class WorksInfoController {
     }
 
     @GetMapping(value = "/list")
-    @Log("查询作品信息")
-    @ApiOperation("查询作品信息")
+    @Log("查询获奖或者人气作品信息")
+    @ApiOperation("查询获奖或者人气作品信息")
 //    @PreAuthorize("@el.check('worksInfo:list')")
     public ResponseEntity<Object> findWorksInfoWithWinFlag(@RequestParam("winFlag") Integer winFlag, Pageable pageable) {
 
-        Map<String, Object> worksInfo = worksInfoService.findWorksInfo(winFlag, pageable);
+        List<WorksInfoDto> worksInfo = worksInfoService.findWorksInfo(winFlag, pageable);
 
         return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
     }
