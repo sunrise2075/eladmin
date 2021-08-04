@@ -41,10 +41,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -62,8 +60,6 @@ import java.util.Map;
 @RequestMapping("/api/worksInfo")
 public class WorksInfoController {
 
-    private static final Path FILE_ROOT = Paths.get(ResourceConstant.UPLOAD_FOLDER_ROOT);
-
     private final WorksInfoService worksInfoService;
 
     @Log("导出数据")
@@ -78,7 +74,7 @@ public class WorksInfoController {
     @Log("投票")
     @ApiOperation("投票")
 //    @PreAuthorize("@el.check('worksInfo:add')")
-    public ResponseEntity<Object> voteWorksInfo(@RequestHeader("openId") String wxOpenId,@RequestBody VoteDto voteDto) {
+    public ResponseEntity<Object> voteWorksInfo(@RequestHeader("openId") String wxOpenId, @RequestBody VoteDto voteDto) {
 
         try {
             worksInfoService.voteWorksInfo(voteDto, wxOpenId);
@@ -101,7 +97,7 @@ public class WorksInfoController {
 
         if (StringUtils.isEmpty(openId)) {
             return new ResponseEntity<>(worksInfoService.queryAll(criteria, pageable), HttpStatus.OK);
-        }else {
+        } else {
             Map<String, Object> worksInfo = worksInfoService.findWorksInfo(criteria, pageable);
             return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "请求成功", worksInfo), HttpStatus.OK);
         }
@@ -172,9 +168,9 @@ public class WorksInfoController {
             for (MultipartFile imageFile : images) {
                 try {
                     String relativeFilePath = String.format("%d_%s", System.currentTimeMillis(), imageFile.getOriginalFilename());
-                    Path path = FILE_ROOT.resolve(relativeFilePath);
+                    Path path = ResourceConstant.FILE_ROOT.resolve(relativeFilePath);
                     imageFile.transferTo(path);
-                    pathList.add(getFileRelativeUrl(relativeFilePath));
+                    pathList.add(ResourceConstant.getFileRelativeUrl(relativeFilePath));
                 } catch (IOException e) {
                     return new ResponseEntity<>(ResponseConstant.buildResult(0, e.getMessage(), null), HttpStatus.CREATED);
                 }
@@ -208,10 +204,10 @@ public class WorksInfoController {
                     .type(Type.VIDEO.getCode()).wxOpenId(openId)
                     .authorName(userName).authorMobile(phone)
                     .selfDescription(description).lifeStatus(LifeStatus.SUBMIT.getCode()).build();
-            Path path = FILE_ROOT.resolve(relativeFilePath);
+            Path path = ResourceConstant.FILE_ROOT.resolve(relativeFilePath);
             video.transferTo(path);
 
-            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(getFileRelativeUrl(relativeFilePath)));
+            worksInfoService.saveWorksInfoWithFiles(worksInfo, Arrays.asList(ResourceConstant.getFileRelativeUrl(relativeFilePath)));
             return new ResponseEntity<>(ResponseConstant.buildResult(ResponseConstant.SUCCESS, "保存成功", null), HttpStatus.CREATED);
         } catch (IOException e) {
             log.info("上传视频发生错误", e);
@@ -219,12 +215,6 @@ public class WorksInfoController {
         }
     }
 
-    /**
-     * 组成用于在网页上显示图片或者加载视频的URL相对路径
-     */
-    private String getFileRelativeUrl(String relativeFilePath) {
-        return String.format("%s%s%s", ResourceConstant.STATIC_FILE_PATH, File.separator, relativeFilePath);
-    }
 
     @PutMapping
     @Log("修改作品信息")

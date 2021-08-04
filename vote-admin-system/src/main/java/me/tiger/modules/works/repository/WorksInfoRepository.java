@@ -36,7 +36,7 @@ public interface WorksInfoRepository extends JpaRepository<WorksInfo, Integer>, 
                     "if (?1 !=''|null, w.author_name like concat('%', ?1, '%') ,1=1) " +
                     "and if(?2 !=''|null, w.author_mobile like concat('%', ?2, '%'), 2=2)  " +
                     "and w.type = ?3 and w.life_status = 3 order by w.created_date desc")
-    Page<WorksInfo> findWorksInfo(String authorName, String authorMobile, Integer type, Pageable pageable);
+    List<WorksInfo> findWorksInfo(String authorName, String authorMobile, Integer type);
 
     @Query(nativeQuery = true, value = "select w.* from works_info w  " +
             "where if(?1!=null,w.win_flag=?1, 1=1) " +

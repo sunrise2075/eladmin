@@ -38,6 +38,10 @@ public class WorksInfoDto implements Serializable {
     /** 作者姓名 */
     private String authorName;
 
+    /**微信用户昵称*/
+    private String wxNickName;
+
+
     /** 作者手机号 */
     private String authorMobile;
 

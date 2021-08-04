@@ -15,6 +15,8 @@
 */
 package me.tiger.modules.works.domain;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import cn.hutool.core.bean.BeanUtil;
 import io.swagger.annotations.ApiModelProperty;
@@ -23,6 +25,8 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.*;
 import java.sql.Timestamp;
 import java.io.Serializable;
@@ -33,6 +37,9 @@ import java.io.Serializable;
 * @author tiger
 * @date 2021-07-31
 **/
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 @Data
 @Table(name="works_podcast")

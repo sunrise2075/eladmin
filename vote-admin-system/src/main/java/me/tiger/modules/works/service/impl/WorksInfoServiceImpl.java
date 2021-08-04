@@ -73,7 +73,7 @@ public class WorksInfoServiceImpl implements WorksInfoService {
         WorksInfo worksInfo = WorksInfo.builder().authorName(criteria.getAuthorName()).authorMobile(criteria.getAuthorMobile()).type(criteria.getType()).build();
         Page<WorksInfo> worksInfoPage = worksInfoRepository.findAll(Example.of(worksInfo), pageable);
 
-        return transformWorksInfoDto(pageable,  worksInfoPage);
+        return transformWorksInfoDto(pageable, worksInfoPage);
     }
 
     @Override
@@ -100,7 +100,9 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     public void update(WorksInfo resources) {
         WorksInfo worksInfo = worksInfoRepository.findById(resources.getId()).orElseGet(WorksInfo::new);
         ValidationUtil.isNull(worksInfo.getId(), "WorksInfo", "id", resources.getId());
-        worksInfo.copy(resources);
+        //更新作品的操作，后台用户值修改lifeStatus属性
+        //worksInfo.copy(resources);
+        worksInfo.setLifeStatus(resources.getLifeStatus());
         worksInfoRepository.save(worksInfo);
     }
 
@@ -159,11 +161,11 @@ public class WorksInfoServiceImpl implements WorksInfoService {
     @Override
     public Map<String, Object> findWorksInfo(WorksInfoQueryCriteria criteria, Pageable pageable) {
 
-        Page<WorksInfo> worksInfoList = worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType(), pageable);
+        List<WorksInfo> worksInfoList = worksInfoRepository.findWorksInfo(criteria.getAuthorName(), criteria.getAuthorMobile(), criteria.getType());
 
-        if (!CollectionUtils.isEmpty(worksInfoList.getContent())) {
-
-            return transformWorksInfoDto(pageable, worksInfoList);
+        if (!CollectionUtils.isEmpty(worksInfoList)) {
+            //微信端查询作品信息：不分页
+            return PageUtil.toPage(worksInfoList.size(), worksInfoList.size(), 1, getWorksInfoDtos(worksInfoList));
         } else {
 
             return PageUtil.toPage(0, 0, 0, java.util.Collections.emptyList());
@@ -234,8 +236,8 @@ public class WorksInfoServiceImpl implements WorksInfoService {
             BeanUtils.copyProperties(worksInfo, dto);
             if (wxWorksAuthorMap.containsKey(worksInfo.getWxOpenId())) {
                 WxWorksAuthor wxWorksAuthor = wxWorksAuthorMap.get(worksInfo.getWxOpenId());
-                dto.setAuthorName(wxWorksAuthor.getNickName());
                 dto.setHeadImgUrl(wxWorksAuthor.getHeadImgUrl());
+                dto.setWxNickName(wxWorksAuthor.getNickName());
             }
 
             //文字类
